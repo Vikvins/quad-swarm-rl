@@ -32,6 +32,14 @@ def add_quadrotors_env_args(env, parser):
     p.add_argument('--quads_neighbor_obs_type', default='none', type=str,
                    choices=['none', 'pos_vel'], help='Choose what kind of obs to send to encoder.')
 
+    # # Static priority between drones, applied at inference without retraining (drone 0 is the most senior)
+    p.add_argument('--quads_static_priority', default='off', type=str, choices=['off', 'mask', 'soft'],
+                   help='off: no priority (original behavior); '
+                        'mask: a drone sees only senior neighbors (smaller number), juniors are hidden from it; '
+                        'soft: a drone sees all neighbors, but senior ones are shown closer than they are')
+    p.add_argument('--quads_static_priority_scale', default=0.7, type=float,
+                   help='soft mode: a junior sees a senior neighbor at this share of the real distance')
+
     # # Neighbor Encoder
     p.add_argument('--quads_neighbor_hidden_size', default=256, type=int,
                    help='The hidden size for the neighbor encoder')
@@ -59,6 +67,16 @@ def add_quadrotors_env_args(env, parser):
     p.add_argument('--quads_obst_size', default=1.0, type=float, help='The radius of obstacles')
     p.add_argument('--quads_obst_spawn_area', nargs='+', default=[6.0, 6.0], type=float,
                    help='The spawning area of obstacles')
+    p.add_argument('--obstacle_layout', default='random', choices=['random', 'corridor', 'dead_end', 'suite'])
+    p.add_argument('--layout_id', default='straight_open', type=str)
+    p.add_argument('--layout_width', default=1.2, type=float)
+    p.add_argument('--corridor_length', default=5.0, type=float)
+    p.add_argument('--dead_end_depth', default=3.0, type=float)
+    p.add_argument('--wall_spacing', default=.45, type=float)
+    p.add_argument('--layout_seed', default=0, type=int)
+    p.add_argument('--layout_rotation', default=0, type=int, choices=[0, 90, 180, 270])
+    p.add_argument('--layout_safety_margin', default=.1, type=float)
+    p.add_argument('--layout_spawn_separation', default=.3, type=float)
     p.add_argument('--quads_domain_random', default=False, type=str2bool, help='Use domain randomization or not')
     p.add_argument('--quads_obst_density_random', default=False, type=str2bool, help='Enable obstacle density randomization or not')
     p.add_argument('--quads_obst_density_min', default=0.05, type=float,
@@ -93,7 +111,7 @@ def add_quadrotors_env_args(env, parser):
                             'ep_lissajous3D', 'ep_rand_bezier', 'swarm_vs_swarm', 'swap_goals', 'dynamic_formations',
                             'mix', 'o_uniform_same_goal_spawn', 'o_random',
                             'o_dynamic_diff_goal', 'o_dynamic_same_goal', 'o_diagonal', 'o_static_same_goal',
-                            'o_static_diff_goal', 'o_swap_goals', 'o_ep_rand_bezier'],
+                            'o_static_diff_goal', 'o_swap_goals', 'o_ep_rand_bezier', 'o_corridor', 'o_dead_end'],
                    help='Choose which scenario to run. ep = evader pursuit')
 
     # Room

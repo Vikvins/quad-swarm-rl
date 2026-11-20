@@ -46,6 +46,8 @@ class QuadrotorEnvMulti(gym.Env):
         assert static_priority in ('off', 'mask', 'soft'), f'Unknown static_priority {static_priority}'
         self.static_priority = static_priority
         self.static_priority_scale = float(static_priority_scale)
+        self.track_priority_neighbors = False
+        self.priority_neighbors = None
 
         # Predefined Parameters
         self.num_agents = num_agents
@@ -227,13 +229,7 @@ class QuadrotorEnvMulti(gym.Env):
             # if not specified explicitly, consider all neighbors
             indices = [j for j in range(self.num_agents) if j != i]
 
-        cur_pos = self.pos[i]
-        cur_vel = self.vel[i]
-        pos_neighbor = np.stack([self.pos[j] for j in indices])
-        vel_neighbor = np.stack([self.vel[j] for j in indices])
-        pos_rel = pos_neighbor - cur_pos
-        vel_rel = vel_neighbor - cur_vel
-        return pos_rel, vel_rel
+        return self.pos[indices] - self.pos[i], self.vel[indices] - self.vel[i]
 
     def get_obs_neighbor_rel(self, env_id, closest_drones):
         i = env_id
@@ -267,37 +263,28 @@ class QuadrotorEnvMulti(gym.Env):
 
     def neighborhood_indices(self):
         """Return a list of closest drones for each drone in the swarm."""
-        # indices of all the other drones except us
-        indices = [[j for j in range(self.num_agents) if i != j] for i in range(self.num_agents)]
-        indices = np.array(indices)
-
+        ids = np.arange(self.num_agents)
+        indices = np.broadcast_to(ids, (self.num_agents, self.num_agents))
+        indices = indices[~np.eye(self.num_agents, dtype=bool)].reshape(self.num_agents, self.num_agents - 1)
         if self.num_use_neighbor_obs >= self.num_agents - 1:
             return indices
-        elif 1 <= self.num_use_neighbor_obs < self.num_agents - 1:
-            close_neighbor_indices = []
+        if self.num_use_neighbor_obs < 1:
+            raise RuntimeError("Incorrect number of neighbors")
 
-            for i in range(self.num_agents):
-                rel_pos, rel_vel = self.get_rel_pos_vel_item(env_id=i, indices=indices[i])
-                rel_dist = np.linalg.norm(rel_pos, axis=1)
-                rel_dist = np.maximum(rel_dist, 0.01)
-                rel_pos_unit = rel_pos / rel_dist[:, None]
-
-                # new relative distance is a new metric that combines relative position and relative velocity
-                # the smaller the new_rel_dist, the closer the drones
-                new_rel_dist = rel_dist + np.sum(rel_pos_unit * rel_vel, axis=1)
-
-                rel_pos_index = new_rel_dist.argsort()
-                rel_pos_index = rel_pos_index[:self.num_use_neighbor_obs]
-                close_neighbor_indices.append(indices[i][rel_pos_index])
-
-            return close_neighbor_indices
-        else:
-            raise RuntimeError("Incorrect number of neigbors")
+        rel_pos = self.pos[indices] - self.pos[:, None, :]
+        rel_vel = self.vel[indices] - self.vel[:, None, :]
+        rel_dist = np.maximum(np.linalg.norm(rel_pos, axis=2), .01)
+        # Preserve the pretrained ordering: distance plus radial relative speed.
+        predicted_dist = rel_dist + np.sum((rel_pos / rel_dist[..., None]) * rel_vel, axis=2)
+        slots = np.argsort(predicted_dist, axis=1)[:, :self.num_use_neighbor_obs]
+        return np.take_along_axis(indices, slots, axis=1)
 
     def add_neighborhood_obs(self, obs):
         if self.static_priority == 'mask':
             return self.add_neighborhood_obs_mask(obs)
         indices = self.neighborhood_indices()
+        if self.track_priority_neighbors:
+            self.priority_neighbors = np.asarray(indices, dtype=np.intp)
         obs_ext = self.extend_obs_space(obs, closest_drones=indices)
         if self.static_priority == 'soft':
             self.apply_soft_priority(obs_ext, indices)
@@ -460,6 +447,7 @@ class QuadrotorEnvMulti(gym.Env):
             observation = e.reset()
             obs.append(observation)
             self.pos[i, :] = e.dynamics.pos
+            self.vel[i, :] = e.dynamics.vel
 
         # Neighbors
         if self.num_use_neighbor_obs > 0:

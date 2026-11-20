@@ -142,3 +142,6 @@ def test_comparison_pairs_episodes_and_reports_differences(tmp_path, monkeypatch
     assert table[('success_rate', 'mask')].iloc[0] == pytest.approx(.75)
     assert table[('success_rate', 'mask-off')].iloc[0] == pytest.approx(0.)
     assert table[('collision_rate', 'mask-off')].iloc[0] == pytest.approx(0.)
+    assert table[('success_rate', 'mask-off_lo95')].iloc[0] == pytest.approx(-.5)
+    assert table[('success_rate', 'mask-off_hi95')].iloc[0] == pytest.approx(.5)
+    assert table[('success_rate', 'mask-off_n')].iloc[0] == 2

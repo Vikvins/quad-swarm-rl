@@ -13,6 +13,8 @@ No training and no changes to the network. The modes are compared on the same st
             but a senior neighbor is shown closer than it really is (relative position times --soft_scale),
             so juniors start avoiding earlier and keep a larger distance, while seniors still avoid juniors.
 
+  dynamic   temporary hover goals based on a local inference-time priority.
+
 For a model fine-tuned with --quads_neighbor_obs_type=pos_vel_prio the priority is not imposed from outside:
 the environment puts it into the observation, and the modes mean
   off       all priorities equal (the priority feature is 0 for every neighbor)
@@ -42,8 +44,10 @@ import json
 import os
 import sys
 import time
+from pathlib import Path
 import types
 
+import gymnasium as gym
 import numpy as np
 import torch
 
@@ -56,10 +60,11 @@ from sample_factory.algo.utils.action_distributions import argmax_actions
 from sample_factory.algo.utils.rl_utils import prepare_and_normalize_obs
 from sample_factory.model.actor_critic import create_actor_critic
 from sample_factory.model.model_utils import get_rnn_size
-from sample_factory.utils.attr_dict import AttrDict
 
+from swarm_rl.dynamic_priority import DynamicPriority, add_dynamic_priority_args, dynamic_priority_config
 from swarm_rl.env_wrappers.quad_utils import make_quadrotor_env
-from swarm_rl.train import register_swarm_components
+from swarm_rl.evaluate_layouts import load_checkpoint
+from swarm_rl.train import parse_swarm_cfg, register_swarm_components
 
 
 # ---------------------------------------------------------------- static priority
@@ -123,20 +128,26 @@ def unwrap(env):
 MODE_ALIASES = {'none': 'off', 'fixed_id': 'mask'}
 
 
-def run_episode(env, core, actor_critic, cfg, seed, mode, deterministic, soft_scale=0.7):
+def run_episode(env, core, actor_critic, cfg, seed, mode, deterministic, soft_scale=0.7, dynamic_config=None):
     np.random.seed(seed)
     torch.manual_seed(seed)
     for i, e in enumerate(core.envs):  # every drone also has its own generator for its spawn point
         e._seed(seed * 1000 + i)
 
     mode = MODE_ALIASES.get(mode, mode)
+    core.track_priority_neighbors = False
+    controller = None
+    if mode == 'dynamic':
+        if getattr(core, 'neighbor_obs_type', None) == 'pos_vel_prio':
+            raise ValueError('Dynamic priority requires a checkpoint with the original pos_vel observations')
+        controller = DynamicPriority(core, dynamic_config)
     if getattr(core, 'neighbor_obs_type', None) == 'pos_vel_prio':
         # the model was trained with the priority feature: priority comes from the environment, no masking
         core.add_neighborhood_obs = types.MethodType(type(core).add_neighborhood_obs, core)
         core.priority_mode = {'off': 'none', 'mask': 'fixed_id', 'random': 'random_perm'}[mode]
     elif hasattr(core, 'static_priority'):
         # the environment has the --quads_static_priority switch: use it
-        core.static_priority = mode
+        core.static_priority = 'off' if controller else mode
         core.static_priority_scale = soft_scale
     elif mode == 'mask':
         core.add_neighborhood_obs = types.MethodType(add_neighborhood_obs_static_priority, core)
@@ -155,9 +166,13 @@ def run_episode(env, core, actor_critic, cfg, seed, mode, deterministic, soft_sc
     step = 0
     while True:
         with torch.no_grad():
-            normalized = prepare_and_normalize_obs(actor_critic, {'obs': torch.as_tensor(np.array(obs), dtype=torch.float32)})
+            if controller:
+                normalized = controller.policy_inputs(actor_critic, obs, rnn_states)
+            else:
+                normalized = prepare_and_normalize_obs(actor_critic, {'obs': torch.as_tensor(np.array(obs), dtype=torch.float32)})
             out = actor_critic(normalized, rnn_states)
             actions = argmax_actions(actor_critic.action_distribution()) if deterministic else out['actions']
+        rnn_states = out['new_rnn_states']
         actions = np.clip(actions.cpu().numpy(), low, high)
         obs, rew, terminated, truncated, infos = env.step(list(actions))
         step += 1
@@ -192,10 +207,10 @@ def main():
     p.add_argument('--checkpoint', required=True, help='.pth checkpoint')
     p.add_argument('--num_agents', type=int, nargs='+', default=[8, 100])
     p.add_argument('--modes', nargs='+', default=['off', 'mask'],
-                   choices=['off', 'mask', 'soft', 'random', 'none', 'fixed_id'],
+                   choices=['off', 'mask', 'soft', 'dynamic', 'random', 'none', 'fixed_id'],
                    help='off: no priority; mask: static priority, seniors do not see juniors; '
                         'soft: static priority, juniors see seniors closer (see --soft_scale). '
-                        'Several modes are compared on the same episodes, e.g. --modes off mask')
+                        'dynamic: temporary hover goals. Compare modes on the same episodes, e.g. --modes off mask dynamic')
     p.add_argument('--soft_scale', type=float, default=0.7,
                    help='soft mode: a junior sees a senior neighbor at this share of the real distance')
     p.add_argument('--episodes', type=int, default=20)
@@ -204,24 +219,32 @@ def main():
     p.add_argument('--stochastic', action='store_true', help='sample actions instead of taking the mean')
     p.add_argument('--out', default='results_static_priority')
     p.add_argument('--label', default='', help='name of the model in the result tables, e.g. base or finetuned')
+    add_dynamic_priority_args(p)
     args = p.parse_args()
+    try:
+        dynamic_config = dynamic_priority_config(args) if 'dynamic' in args.modes else None
+    except ValueError as error:
+        p.error(str(error))
 
     register_swarm_components()
+    torch.set_num_threads(1)
     with open(args.cfg) as f:
         base = json.load(f)
-    base.update(device='cpu', quads_render=False, replay_buffer_sample_prob=0.0, with_wandb=False)
+    base.update(device='cpu', quads_render=False, visualize_v_value=False, replay_buffer_sample_prob=0.0,
+                with_wandb=False)
     if args.scenario:
         base['quads_mode'] = args.scenario
 
-    ckpt = torch.load(args.checkpoint, map_location='cpu', weights_only=False)
+    ckpt = load_checkpoint(Path(args.checkpoint))
     os.makedirs(args.out, exist_ok=True)
     ep_rows, drone_rows = [], []
 
     for n in args.num_agents:
-        cfg = AttrDict(dict(base, quads_num_agents=n))
+        cfg = parse_swarm_cfg(['--env=quadrotor_multi', '--device=cpu'], evaluation=True)
+        vars(cfg).update(base, quads_num_agents=n)
         env = make_quadrotor_env('quadrotor_multi', cfg=cfg)
         core = unwrap(env)
-        actor_critic = create_actor_critic(cfg, env.observation_space, env.action_space)
+        actor_critic = create_actor_critic(cfg, gym.spaces.Dict({'obs': env.observation_space}), env.action_space)
         actor_critic.load_state_dict(ckpt['model'])
         actor_critic.eval()
 
@@ -230,7 +253,7 @@ def main():
             for mode in args.modes:
                 t0 = time.time()
                 episode, per_drone = run_episode(env, core, actor_critic, cfg, seed, mode, not args.stochastic,
-                                                 soft_scale=args.soft_scale)
+                                                 soft_scale=args.soft_scale, dynamic_config=dynamic_config)
                 dt = time.time() - t0
                 ep_rows.append(dict(model=args.label, scenario=base['quads_mode'], num_agents=n, mode=MODE_ALIASES.get(mode, mode), episode=e, seed=seed, wall_time_s=round(dt, 1), **episode))
                 drone_rows += [dict(model=args.label, scenario=base['quads_mode'], num_agents=n, mode=MODE_ALIASES.get(mode, mode), episode=e, **d) for d in per_drone]

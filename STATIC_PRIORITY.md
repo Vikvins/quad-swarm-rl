@@ -33,3 +33,39 @@ python -m swarm_rl.eval_static_priority \
 Только с приоритетом: `--modes mask`, только без: `--modes off`, все три: `--modes off mask soft`.
 
 `--scenario` — название сценария (`quads_mode`), например `o_random`, `o_swap_goals` или новые коридор и тупик. Результаты сохраняются в папку `--out`: `summary.csv` (средние по режимам), `by_rank.csv` (по группам номеров, группа 1 — самые старшие), `episodes.csv` и `drones.csv`.
+
+## Коридоры и тупики
+
+`swarm_rl/run_layout_suite.py` принимает тот же переключатель: `--static_priority off|mask|soft` и `--static_priority_scale`. Каждый режим запускается в свою папку `--output`. Готовые эпизоды при повторном запуске не пересчитываются, поэтому запуск другого режима в папку с результатами прошлого режима останавливается с ошибкой.
+
+```sh
+python -m swarm_rl.run_layout_suite \
+  --checkpoint experiments/swarm100-1b/checkpoints/checkpoint_000781254_1000005120.pth \
+  --config experiments/swarm100-1b/config.json \
+  --output results/suite_off --static_priority off \
+  --agents 8 100 --episodes8 16 --episodes 8 --duration 15 --workers 2
+
+python -m swarm_rl.run_layout_suite \
+  --checkpoint experiments/swarm100-1b/checkpoints/checkpoint_000781254_1000005120.pth \
+  --config experiments/swarm100-1b/config.json \
+  --output results/suite_mask --static_priority mask \
+  --agents 8 100 --episodes8 16 --episodes 8 --duration 15 --workers 2
+```
+
+Сравнение по схемам на одних и тех же сидах (старты, цели и стены совпадают):
+
+```sh
+python scripts/compare_static_priority.py --runs off=results/suite_off mask=results/suite_mask \
+    --output results/priority_comparison.csv
+```
+
+Режим записывается в `manifest.json`, в `effective_config.json` каждого эпизода и в колонку `static_priority` файла `episodes.csv`. Анализ одной серии (`scripts/analyze_layout_suite.py`) запускается для каждой папки отдельно, как раньше.
+
+## Тесты
+
+```sh
+export PYGLET_HEADLESS=true OMP_NUM_THREADS=1
+python -m pytest tests/ -q
+```
+
+`tests/test_static_priority.py` проверяет, что `off` совпадает с исходным наблюдением, `mask` показывает только старших соседей, `soft` меняет только позиции старших, флаг доходит до среды в случайной среде, коридоре и тупике, а сравнение берёт только общие эпизоды.

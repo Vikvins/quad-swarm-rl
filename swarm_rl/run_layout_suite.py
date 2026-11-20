@@ -79,13 +79,16 @@ def _finite_mean(array):
 
 
 def run_episode(task):
-    layout_id,agents,seed,duration,output,checkpoint,probes,every=task
+    layout_id,agents,seed,duration,output,checkpoint,probes,every,*priority=task
+    static_priority,static_priority_scale=priority if priority else ('off',.7)
     folder=Path(output)/f'n{agents}'/layout_id/f'seed{seed:03d}'
     if (folder/'episode.json').exists():
         return json.loads((folder/'episode.json').read_text())
     folder.mkdir(parents=True,exist_ok=True)
     cfg=make_suite_config(_ORIGINAL_CONFIG,layout_id,agents,duration)
     cfg.layout_seed=seed
+    cfg.quads_static_priority=static_priority
+    cfg.quads_static_priority_scale=static_priority_scale
     (folder/'effective_config.json').write_text(json.dumps(vars(cfg),indent=2))
     env=None
     diag=None
@@ -164,7 +167,7 @@ def run_episode(task):
         for i,row in enumerate(rows): row['episode_reward']=float(reward_total[i])
         _write_csv(folder/'agents.csv',rows)
         _write_csv(folder/'timeseries.csv',series)
-        result=dict(layout_id=layout_id,agents=agents,seed=seed,**tracker.summary(),
+        result=dict(layout_id=layout_id,agents=agents,seed=seed,static_priority=static_priority,**tracker.summary(),
                     swarm_success=int(all(r['success'] for r in rows)),
                     official_agent_success=float(stats.get('metric/agent_success_rate',np.nan)),
                     official_collision=float(stats.get('metric/agent_col_rate',np.nan)),
@@ -240,7 +243,19 @@ def main():
     parser.add_argument('--workers',type=int,default=6)
     parser.add_argument('--probes',type=int,default=8)
     parser.add_argument('--every',type=int,default=10)
+    parser.add_argument('--static_priority',default='off',choices=['off','mask','soft'],
+                        help='static priority by drone number at inference: off = none, mask = a drone sees only '
+                             'senior neighbors, soft = senior neighbors are shown closer. Use a separate --output per mode')
+    parser.add_argument('--static_priority_scale',type=float,default=.7,
+                        help='soft mode: a junior sees a senior neighbor at this share of the real distance')
     args=parser.parse_args()
+    previous=args.output/'manifest.json'
+    if previous.exists():
+        # finished episodes are reused on restart, so one output folder must hold one priority mode
+        old=json.loads(previous.read_text())
+        if (old.get('static_priority','off'),float(old.get('static_priority_scale',.7)))!=(args.static_priority,args.static_priority_scale):
+            raise SystemExit(f"{args.output} already holds results for static_priority={old.get('static_priority','off')}; "
+                             f"use another --output for static_priority={args.static_priority}")
     args.output.mkdir(parents=True,exist_ok=True)
     os.environ.setdefault('METRICS_TB_EVERY','10')
     os.environ.setdefault('METRICS_TB_AGENTS','0')
@@ -257,8 +272,10 @@ def main():
                                  for folder in ('swarm_rl','gym_art') for p in (project/folder).rglob('*.py')})
     for name in ('drone_metrics.py','drone_influence.py'):
         manifest['source_sha256'][name]=hashlib.sha256((project/name).read_bytes()).hexdigest()
+    manifest.update(static_priority=args.static_priority,static_priority_scale=args.static_priority_scale)
     (args.output/'manifest.json').write_text(json.dumps(manifest,indent=2))
-    tasks=[(layout,n,seed,args.duration,str(args.output),str(args.checkpoint),args.probes,args.every)
+    tasks=[(layout,n,seed,args.duration,str(args.output),str(args.checkpoint),args.probes,args.every,
+            args.static_priority,args.static_priority_scale)
            for n in args.agents for seed in range(args.episodes8 if n==8 else args.episodes) for layout in args.layouts]
     # Each subprocess seeds both Python/NumPy and Numba RNG. Independent runs
     # can be resumed from completed episode.json files without discarding data.
@@ -270,7 +287,7 @@ def main():
             row=future.result()
             completed.append(row)
             _write_csv(args.output/'episodes.csv',sorted(completed,key=lambda r:(r['agents'],r['layout_id'],r['seed'])))
-            print(f"Completed {len(completed)}/{len(tasks)} N={row['agents']} {row['layout_id']} seed={row['seed']} success={row['success_rate']:.3f} collision={row['collision_rate']:.3f} seconds={row['wall_seconds']:.1f}",flush=True)
+            print(f"Completed {len(completed)}/{len(tasks)} [{args.static_priority}] N={row['agents']} {row['layout_id']} seed={row['seed']} success={row['success_rate']:.3f} collision={row['collision_rate']:.3f} seconds={row['wall_seconds']:.1f}",flush=True)
 
 
 if __name__=='__main__':

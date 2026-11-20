@@ -32,6 +32,18 @@ def make_quadrotor_env_multi(cfg, render_mode=None, **kwargs):
 
     rew_coeff = DEFAULT_QUAD_REWARD_SHAPING['quad_rewards']
     use_replay_buffer = cfg.replay_buffer_sample_prob > 0.0
+    layout_kind = getattr(cfg, 'obstacle_layout', 'random')
+    structured_layout = layout_kind != 'random'
+    if structured_layout and (not cfg.quads_use_obstacles or use_replay_buffer):
+        raise ValueError('Structured evaluation layouts require obstacles=True and replay_buffer_sample_prob=0')
+    layout_options = None
+    if structured_layout:
+        layout_options = dict(kind=layout_kind, width=cfg.layout_width, corridor_length=cfg.corridor_length,
+                              dead_end_depth=cfg.dead_end_depth, wall_spacing=cfg.wall_spacing,
+                              seed=cfg.layout_seed, rotation=cfg.layout_rotation,
+                              safety_margin=cfg.layout_safety_margin, spawn_separation=cfg.layout_spawn_separation)
+        if layout_kind == 'suite':
+            layout_options['layout_id'] = cfg.layout_id
 
     env = QuadrotorEnvMulti(
         num_agents=cfg.quads_num_agents, ep_time=cfg.quads_episode_duration, rew_coeff=rew_coeff,
@@ -52,7 +64,7 @@ def make_quadrotor_env_multi(cfg, render_mode=None, **kwargs):
         # Numba Speed Up
         use_numba=cfg.quads_use_numba,
         # Scenarios
-        quads_mode=cfg.quads_mode,
+        quads_mode=('o_corridor' if layout_kind == 'suite' else 'o_' + layout_kind) if structured_layout else cfg.quads_mode,
         # Room
         room_dims=cfg.quads_room_dims,
         # Replay Buffer
@@ -65,6 +77,7 @@ def make_quadrotor_env_multi(cfg, render_mode=None, **kwargs):
         sense_noise=sense_noise, init_random_state=False,
         # Rendering
         render_mode=render_mode,
+        layout_options=layout_options,
     )
 
     if use_replay_buffer:

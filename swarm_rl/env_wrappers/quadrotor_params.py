@@ -67,6 +67,16 @@ def add_quadrotors_env_args(env, parser):
     p.add_argument('--quads_obst_size', default=1.0, type=float, help='The radius of obstacles')
     p.add_argument('--quads_obst_spawn_area', nargs='+', default=[6.0, 6.0], type=float,
                    help='The spawning area of obstacles')
+    p.add_argument('--obstacle_layout', default='random', choices=['random', 'corridor', 'dead_end', 'suite'])
+    p.add_argument('--layout_id', default='straight_open', type=str)
+    p.add_argument('--layout_width', default=1.2, type=float)
+    p.add_argument('--corridor_length', default=5.0, type=float)
+    p.add_argument('--dead_end_depth', default=3.0, type=float)
+    p.add_argument('--wall_spacing', default=.45, type=float)
+    p.add_argument('--layout_seed', default=0, type=int)
+    p.add_argument('--layout_rotation', default=0, type=int, choices=[0, 90, 180, 270])
+    p.add_argument('--layout_safety_margin', default=.1, type=float)
+    p.add_argument('--layout_spawn_separation', default=.3, type=float)
     p.add_argument('--quads_domain_random', default=False, type=str2bool, help='Use domain randomization or not')
     p.add_argument('--quads_obst_density_random', default=False, type=str2bool, help='Enable obstacle density randomization or not')
     p.add_argument('--quads_obst_density_min', default=0.05, type=float,
@@ -101,7 +111,7 @@ def add_quadrotors_env_args(env, parser):
                             'ep_lissajous3D', 'ep_rand_bezier', 'swarm_vs_swarm', 'swap_goals', 'dynamic_formations',
                             'mix', 'o_uniform_same_goal_spawn', 'o_random',
                             'o_dynamic_diff_goal', 'o_dynamic_same_goal', 'o_diagonal', 'o_static_same_goal',
-                            'o_static_diff_goal', 'o_swap_goals', 'o_ep_rand_bezier'],
+                            'o_static_diff_goal', 'o_swap_goals', 'o_ep_rand_bezier', 'o_corridor', 'o_dead_end'],
                    help='Choose which scenario to run. ep = evader pursuit')
 
     # Room

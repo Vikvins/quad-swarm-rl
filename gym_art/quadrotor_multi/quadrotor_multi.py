@@ -37,7 +37,7 @@ class QuadrotorEnvMulti(gym.Env):
                  dynamics_randomize_every, dynamics_change, dyn_sampler_1,
                  sense_noise, init_random_state,
                  # Rendering
-                 render_mode='human',
+                 render_mode='human', layout_options=None,
                  # Static priority at inference
                  static_priority='off', static_priority_scale=0.7,
                  ):
@@ -60,6 +60,11 @@ class QuadrotorEnvMulti(gym.Env):
         self.is_multiagent = True
         self.room_dims = room_dims
         self.quads_view_mode = quads_view_mode
+        self.layout_options = layout_options
+        self.layout_plan = None
+        self.layout_episode_index = 0
+        self.layout_terminal_state = None
+        self.capture_terminal_state = False
 
         # Generate All Quadrotors
         self.envs = []
@@ -232,6 +237,8 @@ class QuadrotorEnvMulti(gym.Env):
 
     def get_obs_neighbor_rel(self, env_id, closest_drones):
         i = env_id
+        if len(closest_drones[i]) == 0:
+            return np.empty((0, 6))
         pos_neighbors_rel, vel_neighbors_rel = self.get_rel_pos_vel_item(env_id=i, indices=closest_drones[i])
         obs_neighbor_rel = np.concatenate((pos_neighbors_rel, vel_neighbors_rel), axis=1)
         return obs_neighbor_rel
@@ -240,6 +247,14 @@ class QuadrotorEnvMulti(gym.Env):
         obs_neighbors = []
         for i in range(len(self.envs)):
             obs_neighbor_rel = self.get_obs_neighbor_rel(env_id=i, closest_drones=closest_drones)
+            if len(obs_neighbor_rel) < self.num_use_neighbor_obs:
+                # Preserve pretrained input dimensions for 1/2-agent diagnostics.
+                # Missing neighbors are represented as stationary and far away,
+                # not as another drone at the receiver's own position.
+                padded = np.zeros((self.num_use_neighbor_obs, 6))
+                padded[:, :3] = self.clip_neighbor_space_max_box.reshape(-1, 6)[:, :3]
+                padded[:len(obs_neighbor_rel)] = obs_neighbor_rel
+                obs_neighbor_rel = padded
             obs_neighbors.append(obs_neighbor_rel.reshape(-1))
         obs_neighbors = np.stack(obs_neighbors)
 
@@ -256,7 +271,7 @@ class QuadrotorEnvMulti(gym.Env):
         indices = [[j for j in range(self.num_agents) if i != j] for i in range(self.num_agents)]
         indices = np.array(indices)
 
-        if self.num_use_neighbor_obs == self.num_agents - 1:
+        if self.num_use_neighbor_obs >= self.num_agents - 1:
             return indices
         elif 1 <= self.num_use_neighbor_obs < self.num_agents - 1:
             close_neighbor_indices = []
@@ -405,8 +420,20 @@ class QuadrotorEnvMulti(gym.Env):
         # Scenario reset
         if self.use_obstacles:
             self.obstacles = MultiObstacles(obstacle_size=self.obst_size, quad_radius=self.quad_arm)
-            self.obst_map, obst_pos_arr, cell_centers = self.obst_generation_given_density()
-            self.scenario.reset(obst_map=self.obst_map, cell_centers=cell_centers)
+            if self.layout_options is None:
+                self.obst_map, obst_pos_arr, cell_centers = self.obst_generation_given_density()
+                self.scenario.reset(obst_map=self.obst_map, cell_centers=cell_centers)
+            else:
+                from gym_art.quadrotor_multi.obstacles.layouts import LayoutSpec, build_layout
+                options = dict(self.layout_options)
+                options['seed'] += self.layout_episode_index
+                self.layout_episode_index += 1
+                self.layout_plan = build_layout(LayoutSpec(num_agents=self.num_agents, room_dims=tuple(self.room_dims),
+                                                           obstacle_size=self.obst_size, agent_radius=self.quad_arm, **options))
+                obst_pos_arr = self.layout_plan.obstacles
+                self.num_obstacles = len(obst_pos_arr)
+                self.obst_map = None
+                self.scenario.reset(layout_plan=self.layout_plan)
         else:
             self.scenario.reset()
 
@@ -423,6 +450,12 @@ class QuadrotorEnvMulti(gym.Env):
             else:
                 e.spawn_point = self.scenario.spawn_points[i]
             e.rew_coeff = self.rew_coeff
+
+            if self.layout_plan is not None:
+                # The original simulator jitters starts. Disable it for the
+                # validated benchmark positions, otherwise safety is not assured.
+                e.box = 0.0
+                e._seed(self.layout_plan.spec.seed + 1009 * i)
 
             observation = e.reset()
             obs.append(observation)
@@ -469,6 +502,7 @@ class QuadrotorEnvMulti(gym.Env):
         return obs
 
     def step(self, actions):
+        self.layout_terminal_state = None
         obs, rewards, dones, infos = [], [], [], []
 
         for i, a in enumerate(actions):
@@ -775,6 +809,11 @@ class QuadrotorEnvMulti(gym.Env):
                     infos[i]['episode_extra_stats']['metric/agent_obst_col_rate'] = agent_obst_col_ratio
                     infos[i]['episode_extra_stats'][f'{scenario_name}/agent_obst_col_rate'] = agent_obst_col_ratio
 
+            if self.layout_plan is not None or self.capture_terminal_state:
+                self.layout_terminal_state = dict(
+                    positions=self.pos.copy(),
+                    room_contacts=np.array([bool(e.dynamics.crashed_floor or e.dynamics.crashed_wall or e.dynamics.crashed_ceiling)
+                                            for e in self.envs]))
             obs = self.reset()
             # terminate the episode for all "sub-envs"
             dones = [True] * len(dones)

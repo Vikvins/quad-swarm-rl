@@ -37,9 +37,15 @@ class QuadrotorEnvMulti(gym.Env):
                  dynamics_randomize_every, dynamics_change, dyn_sampler_1,
                  sense_noise, init_random_state,
                  # Rendering
-                 render_mode='human'
+                 render_mode='human',
+                 # Static priority at inference
+                 static_priority='off', static_priority_scale=0.7,
                  ):
         super().__init__()
+
+        assert static_priority in ('off', 'mask', 'soft'), f'Unknown static_priority {static_priority}'
+        self.static_priority = static_priority
+        self.static_priority_scale = float(static_priority_scale)
 
         # Predefined Parameters
         self.num_agents = num_agents
@@ -274,9 +280,61 @@ class QuadrotorEnvMulti(gym.Env):
             raise RuntimeError("Incorrect number of neigbors")
 
     def add_neighborhood_obs(self, obs):
+        if self.static_priority == 'mask':
+            return self.add_neighborhood_obs_mask(obs)
         indices = self.neighborhood_indices()
         obs_ext = self.extend_obs_space(obs, closest_drones=indices)
+        if self.static_priority == 'soft':
+            self.apply_soft_priority(obs_ext, indices)
         return obs_ext
+
+    # Static priority by drone number: drone 0 is the most senior, drone N-1 the most junior.
+    # The network is not changed, only the neighbor part of the observation.
+
+    def neighborhood_indices_seniors(self):
+        """K closest neighbors among senior drones only, with the same closeness metric as neighborhood_indices.
+        Returns the indices and, for every drone, how many slots stayed empty (drone 0 has no seniors)."""
+        k = self.num_use_neighbor_obs
+        indices, missing = [], np.zeros(self.num_agents, dtype=int)
+        for i in range(self.num_agents):
+            seniors = np.arange(i)
+            if len(seniors) == 0:
+                chosen = np.array([], dtype=int)
+            else:
+                rel_pos, rel_vel = self.get_rel_pos_vel_item(env_id=i, indices=seniors)
+                rel_dist = np.maximum(np.linalg.norm(rel_pos, axis=1), 0.01)
+                new_rel_dist = rel_dist + np.sum(rel_pos / rel_dist[:, None] * rel_vel, axis=1)
+                chosen = seniors[new_rel_dist.argsort()[:k]]
+            missing[i] = k - len(chosen)
+            # empty slots temporarily point to the drone itself and are overwritten below
+            indices.append(np.concatenate([chosen, np.full(missing[i], i, dtype=int)]))
+        return indices, missing
+
+    def add_neighborhood_obs_mask(self, obs):
+        """mask: a drone sees only senior neighbors. An empty slot shows a neighbor far away
+        (the largest distance seen in training) with zero relative velocity, i.e. 'nobody around'."""
+        indices, missing = self.neighborhood_indices_seniors()
+        obs_ext = self.extend_obs_space(obs, closest_drones=indices)
+        self_size = obs_ext.shape[1] - self.clip_neighbor_space_length
+        k = self.num_use_neighbor_obs
+        per = self.clip_neighbor_space_length // k
+        for i in np.nonzero(missing)[0]:
+            for slot in range(k - missing[i], k):
+                a = self_size + slot * per
+                obs_ext[i, a:a + 3] = self.clip_neighbor_space_max_box[slot * per:slot * per + 3]
+                obs_ext[i, a + 3:a + per] = 0.0
+        return obs_ext
+
+    def apply_soft_priority(self, obs_ext, indices):
+        """soft: the relative position of a senior neighbor is multiplied by static_priority_scale,
+        so a junior sees it closer than it is and starts avoiding earlier. Juniors are shown as they are."""
+        self_size = obs_ext.shape[1] - self.clip_neighbor_space_length
+        per = self.clip_neighbor_space_length // self.num_use_neighbor_obs
+        for i in range(self.num_agents):
+            for slot, j in enumerate(indices[i]):
+                if j < i:
+                    a = self_size + slot * per
+                    obs_ext[i, a:a + 3] *= self.static_priority_scale
 
     def can_drones_fly(self):
         """

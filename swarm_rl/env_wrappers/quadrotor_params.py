@@ -32,6 +32,14 @@ def add_quadrotors_env_args(env, parser):
     p.add_argument('--quads_neighbor_obs_type', default='none', type=str,
                    choices=['none', 'pos_vel'], help='Choose what kind of obs to send to encoder.')
 
+    # # Static priority between drones, applied at inference without retraining (drone 0 is the most senior)
+    p.add_argument('--quads_static_priority', default='off', type=str, choices=['off', 'mask', 'soft'],
+                   help='off: no priority (original behavior); '
+                        'mask: a drone sees only senior neighbors (smaller number), juniors are hidden from it; '
+                        'soft: a drone sees all neighbors, but senior ones are shown closer than they are')
+    p.add_argument('--quads_static_priority_scale', default=0.7, type=float,
+                   help='soft mode: a junior sees a senior neighbor at this share of the real distance')
+
     # # Neighbor Encoder
     p.add_argument('--quads_neighbor_hidden_size', default=256, type=int,
                    help='The hidden size for the neighbor encoder')

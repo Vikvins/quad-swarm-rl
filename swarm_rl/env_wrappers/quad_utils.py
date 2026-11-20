@@ -40,6 +40,9 @@ def make_quadrotor_env_multi(cfg, render_mode=None, **kwargs):
         neighbor_visible_num=cfg.quads_neighbor_visible_num, neighbor_obs_type=cfg.quads_neighbor_obs_type,
         collision_hitbox_radius=cfg.quads_collision_hitbox_radius,
         collision_falloff_radius=cfg.quads_collision_falloff_radius,
+        # Static priority (getattr: configs saved before this flag existed do not have these keys)
+        static_priority=getattr(cfg, 'quads_static_priority', 'off'),
+        static_priority_scale=getattr(cfg, 'quads_static_priority_scale', 0.7),
         # Obstacle
         use_obstacles=cfg.quads_use_obstacles, obst_density=cfg.quads_obst_density, obst_size=cfg.quads_obst_size,
         obst_spawn_area=cfg.quads_obst_spawn_area,

@@ -13,4 +13,11 @@ _results
 *.cprof
 *.egg-info/
 train_dir/
+results/
+exports/
+logs/
 wandb/
+
+/reports/corridors-deadends-1b/
+
+/experiments/swarm100-1b/checkpoints/

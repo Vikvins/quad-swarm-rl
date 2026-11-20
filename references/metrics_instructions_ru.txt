@@ -1,0 +1,36 @@
+Прикладываю два скрипта для проекта quad-swarm-rl: drone_metrics.py и drone_influence.py. Они ничего не меняют в обучении и в файлах проекта: оборачивают стандартный enjoy из Sample Factory и пишут метрики во время прогона обученной политики.
+
+Что считают
+
+drone_metrics.py: чувствительность действия к шуму в положении цели, скорость и ускорение изменения команд (плавность), долю насыщенных команд.
+
+drone_influence.py добавляет к этому влияние соседей и влияние препятствий на действие (obstacle_share). Это локальная чувствительность, а не внимание и не причинность.
+
+Куда положить
+Оба файла в корень проекта (рядом с train.sh), в одну папку. Запускать в окружении, где выполнено pip install -e ..
+
+Как запустить
+
+bash
+python drone_influence.py --train_dir=./train_dir --experiment=mytest \
+  --device=cpu --eval_deterministic=True --metrics-dir=./metrics_out/run1
+Только плавность без влияния: то же, но python drone_metrics.py. Папка --metrics-dir должна быть новой. Без этого параметра результаты уйдут в ~/quad-metrics/<дата_время>. Дополнительные настройки: --metrics-sigma (шум, по умолчанию 0,02 м), --metrics-probes (число проб, 8), --metrics-every (частота, 10 шагов), --metrics-dt, а для влияния переменные INFLUENCE_ALPHA и INFLUENCE_MIN_EFFECT.
+
+Требования
+CPU, use_rnn=False, quads_obs_repr=xyz_vxyz_R_omega_floor, env_frameskip=1, eval_deterministic=True, нормализация входов отключена. Если условие не выполнено, скрипт остановится с понятной ошибкой. Если установленный enjoy.py отличается от ожидаемого, скрипт выйдет, ничего не изменив.
+
+Где смотреть результат
+В папке --metrics-dir:
+
+metrics.csv: по строке на шаг и дрона (чувствительность, изменение команд, насыщение);
+
+influence.csv: влияние соседей и препятствий (только для drone_influence.py);
+
+metadata.json и influence_settings.json: параметры и настройки прогона;
+
+tensorboard/: те же кривые для просмотра.
+
+Графики: tensorboard --logdir ./metrics_out/run1, затем адрес http://localhost:6006 в браузере. CSV открываются в Excel или через pandas.read_csv.
+
+Ограничения
+Скрипты не считают success rate, столкновения и расстояние до цели. Для этого нужен отдельный сбор.

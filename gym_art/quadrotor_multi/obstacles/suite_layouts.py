@@ -10,6 +10,10 @@ from gym_art.quadrotor_multi.obstacles.layouts import (
     LayoutPlan, _wall, _zone, validate_layout,
 )
 
+from gym_art.quadrotor_multi.obstacles.priority_layouts import (
+    priority_catalogue, build_priority_layout,
+)
+
 
 FAMILIES = {
     'straight': ('Прямой проход', 1.6, [(0., -5.), (0., 3.)], (0., -3.7), (0., 4.8), 0.),
@@ -23,7 +27,7 @@ FAMILIES = {
 }
 
 
-def catalogue():
+def catalogue(include_priority=False):
     rows = [dict(id='random_baseline', family='random', title='Исходная случайная среда', has_dead_end=False, paired_with=None),
             dict(id='open_room', family='open', title='Открытая комната', has_dead_end=False, paired_with=None)]
     for family, (title, width, *_rest) in FAMILIES.items():
@@ -33,6 +37,8 @@ def catalogue():
             rows.append(dict(id=f'{family}_{suffix}', family=family,
                              title=title + (' с тупиком' if capped else ' без тупика'),
                              width=width, has_dead_end=capped, paired_with=f'{family}_{other}'))
+    if include_priority:
+        rows.extend(priority_catalogue())
     return rows
 
 
@@ -80,6 +86,8 @@ def _portal(point, direction, a):
 
 def build_suite_layout(spec):
     layout_id = spec.layout_id
+    if layout_id in {r['id'] for r in priority_catalogue()}:
+        return build_priority_layout(spec)
     entry = next((r for r in catalogue() if r['id'] == layout_id), None)
     if entry is None or layout_id == 'random_baseline':
         raise ValueError(f'Unknown structured suite layout: {layout_id}')

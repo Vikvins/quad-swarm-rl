@@ -1,0 +1,4 @@
+checkpoint,trained_steps,agents,condition,episodes,mean_agent_success,mean_selected_agent_success,mean_swarm_success,mean_agent_obstacle_collision,mean_agent_neighbor_collision,mean_room_collision_events,selected_agent_success_delta_pp_vs_clean
+checkpoint_000292970_300001280.pth,300001280,100,clean,16,0.150625,0.155,0.0,0.203125,0.13375,17.125,0.0
+checkpoint_000292970_300001280.pth,300001280,100,dropout_0p5s,16,0.145,0.15,0.0,0.19875,0.134375,16.9375,-0.5
+checkpoint_000292970_300001280.pth,300001280,100,dropout_2s,16,0.13625,0.1375,0.0,0.20125,0.115,15.375,-1.75

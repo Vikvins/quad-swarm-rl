@@ -1,5 +1,7 @@
 # Drone Simulator: QuadSwarm
 
+Результаты, веса и протоколы тестирования — [эксперименты ветки `swarm100`](experiments/README.md).
+
 A codebase for training reinforcement learning policies for quadrotor swarms.
 Includes:
 * Flight dynamics simulator forked from https://github.com/amolchanov86/gym_art

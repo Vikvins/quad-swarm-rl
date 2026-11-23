@@ -1,0 +1,48 @@
+{
+  "agents": [
+    8,
+    100
+  ],
+  "modes": [
+    "peer_off",
+    "baseline",
+    "static_brake"
+  ],
+  "seed": 50000,
+  "duration": 15.0,
+  "layouts": [
+    "straight_open",
+    "straight_deadend",
+    "narrow_open",
+    "narrow_deadend",
+    "elbow_open",
+    "elbow_deadend",
+    "zigzag_open",
+    "zigzag_deadend",
+    "funnel_open",
+    "funnel_deadend",
+    "wide_u_open",
+    "wide_u_deadend",
+    "fork_open",
+    "fork_deadend",
+    "comb_open",
+    "comb_deadend"
+  ],
+  "static_brake": {
+    "horizon": 0.65,
+    "distance_scale": 1.8,
+    "stopping_time": 0.25,
+    "hold": 0.2,
+    "max_wait": 2.0,
+    "release": 0.5
+  },
+  "files": {
+    "config.json": "8c21f01ad541112fb109daf0bf13a471656cf2118b1f6a74f32068c439600d0a",
+    "checkpoint_000781254_1000005120.pth": "f429fa60b70a82ba1aaf54ebbdd0f966d65995d46caf87e0fd8628e1f15b2524",
+    "priority.pt": "6de1c228e57620ae231d57ce32ffad8a7b8aa85266ab68c5fc928b8bd4321240",
+    "evaluate_priority.py": "94a6692c85dab1dcd5bd8a62b841d8dfc597d0d777077310456d62701acb2fc7",
+    "priority_brake.py": "1b5e1d71d4564724279e5cca86a8345e4bef685499ab433909e1a656252e07a1",
+    "train_priority.py": "fae8f50f45a789ef3a8b21e9af09f6fa67f0f4aaeec5888c5bd76384b802f8e3"
+  },
+  "peer_channel": "off"
+}

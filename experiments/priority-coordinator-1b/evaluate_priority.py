@@ -28,7 +28,7 @@ from swarm_rl.evaluate_layouts import load_checkpoint
 from swarm_rl.layout_metrics import LayoutMetrics
 from swarm_rl.run_layout_suite import make_suite_config, seed_numba
 from swarm_rl.train import register_swarm_components
-from train_priority import PriorityPolicy
+from train_priority import GoalControl, PriorityPolicy
 
 
 MODES = ("baseline", "static_brake", "coordinator")
@@ -37,21 +37,27 @@ SEED = 50000
 DURATION = 15.
 _FLIGHT_STATE = None
 _RANKER = None
+_PEER_CHECKPOINT = None
 _CONFIG = None
 
 
-def initialize(config, flight_path, coordinator_path):
-    global _CONFIG, _FLIGHT_STATE, _RANKER
+def initialize(config, flight_path, coordinator_path, peer_path=None):
+    global _CONFIG, _FLIGHT_STATE, _RANKER, _PEER_CHECKPOINT
     torch.set_num_threads(1)
     register_swarm_components()
     _CONFIG = json.loads(config.read_text())
     _FLIGHT_STATE = load_checkpoint(flight_path)["model"]
-    checkpoint = torch.load(coordinator_path, map_location="cpu", weights_only=True)
-    if checkpoint["arguments"]["mode"] != "coordinator" or checkpoint["progress"]["steps"] < 1_000_000_000:
-        raise ValueError("Expected the completed learned coordinator checkpoint")
-    _RANKER = PriorityPolicy("coordinator", 9, _CONFIG["quads_neighbor_visible_num"])
-    _RANKER.load_state_dict(checkpoint["policy"], strict=True)
-    _RANKER.eval()
+    if coordinator_path:
+        checkpoint = torch.load(coordinator_path, map_location="cpu", weights_only=True)
+        if checkpoint["arguments"]["mode"] != "coordinator" or checkpoint["progress"]["steps"] < 1_000_000_000:
+            raise ValueError("Expected the completed learned coordinator checkpoint")
+        _RANKER = PriorityPolicy("coordinator", 9, _CONFIG["quads_neighbor_visible_num"])
+        _RANKER.load_state_dict(checkpoint["policy"], strict=True)
+        _RANKER.eval()
+    if peer_path:
+        _PEER_CHECKPOINT = torch.load(peer_path, map_location="cpu", weights_only=True)
+        if _PEER_CHECKPOINT["arguments"]["mode"] != "peer" or _PEER_CHECKPOINT["progress"]["steps"] < 1_000_000_000:
+            raise ValueError("Expected the completed peer checkpoint")
 
 
 class LearnedPriority(DynamicPriority):
@@ -68,6 +74,33 @@ class LearnedPriority(DynamicPriority):
 class FixedPriority(DynamicPriority):
     def _priority(self, distance, critic_values):
         return -self.ids[:, 0]
+
+
+class PeerWithChannelOff:
+    def __init__(self, core, observations):
+        self.core = core
+        features = torch.as_tensor(observations, dtype=torch.float32)
+        self.policy = PriorityPolicy("peer", features.shape[-1], core.num_use_neighbor_obs)
+        self.policy.load_state_dict(_PEER_CHECKPOINT["policy"], strict=True)
+        self.policy.eval()
+        self.goal_control = GoalControl("peer", (None, core.pos[None]), core.control_dt, core.collision_threshold)
+        self.no_messages = features.new_zeros((len(features), core.num_use_neighbor_obs + 2))
+        self.episode_ended = np.array([False])
+        self.yield_ticks = 0
+
+    def policy_inputs(self, model, observations, states):
+        features = torch.as_tensor(np.asarray(observations), dtype=torch.float32)
+        hidden = self.policy.encode(features)
+        logits = self.policy.decide(torch.cat((hidden, self.no_messages), dim=-1))
+        wait = logits[:, 0].numpy() > 0
+        core = self.core
+        goals = np.asarray([drone.goal for drone in core.envs], dtype=np.float32)
+        state = (None, core.pos[None], core.vel[None], goals[None], None)
+        self.yield_ticks += int(np.count_nonzero((self.goal_control.remaining[0] > 0) | wait))
+        offsets = self.goal_control.offsets(state, None, wait[None], self.episode_ended)[0]
+        inputs = features.clone()
+        inputs[:, :3] += torch.as_tensor(offsets, dtype=features.dtype)
+        return model.normalize_obs({"obs": inputs})
 
 
 def record_json(path, value):
@@ -100,6 +133,8 @@ def episode(agents, layout, mode, output):
             coordinator = ranking(core, DynamicPriorityConfig()) if ranking else None
             brake = PriorityBrake(core, BrakeConfig()) if mode == "static_brake" else None
             obs, _ = env.reset()
+            if mode == "peer_off":
+                coordinator = PeerWithChannelOff(core, np.asarray(obs))
             plan = core.layout_plan
             model = create_actor_critic(cfg, gym.spaces.Dict({"obs": env.observation_space}), env.action_space)
             model.load_state_dict(_FLIGHT_STATE, strict=True)
@@ -190,11 +225,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--flight", type=Path, required=True)
-    parser.add_argument("--coordinator", type=Path, required=True)
+    parser.add_argument("--coordinator", type=Path)
+    parser.add_argument("--peer", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=16)
-    parser.add_argument("--modes", nargs="+", choices=(*MODES, "fixed_rank_local"), default=MODES)
+    parser.add_argument("--modes", nargs="+", choices=(*MODES, "fixed_rank_local", "peer_off"), default=MODES)
     args = parser.parse_args()
+    if "coordinator" in args.modes and not args.coordinator:
+        parser.error("The coordinator mode requires --coordinator")
+    if "peer_off" in args.modes and not args.peer:
+        parser.error("The peer_off mode requires --peer")
     layouts = [layout for layout in catalogue() if layout["paired_with"] is not None]
     if len(layouts) != 16:
         raise RuntimeError("Expected eight paired corridor/dead-end layouts")
@@ -202,8 +242,13 @@ def main():
         agents=list(AGENT_COUNTS), modes=list(args.modes), seed=SEED, duration=DURATION,
         layouts=[layout["id"] for layout in layouts], static_brake=vars(BrakeConfig()),
         files={file.name: hashlib.sha256(file.read_bytes()).hexdigest()
-               for file in (args.config, args.flight, args.coordinator, Path(__file__), Path(__file__).with_name("priority_brake.py"))},
+               for file in (args.config, args.flight, args.coordinator, args.peer, Path(__file__),
+                            Path(__file__).with_name("priority_brake.py")) if file},
     )
+    if "peer_off" in args.modes:
+        manifest["peer_channel"] = "off"
+        trainer = Path(__file__).with_name("train_priority.py")
+        manifest["files"][trainer.name] = hashlib.sha256(trainer.read_bytes()).hexdigest()
     manifest_path = args.output / "manifest.json"
     if manifest_path.is_file() and json.loads(manifest_path.read_text()) != manifest:
         raise ValueError("Refusing to merge results from different configurations")
@@ -212,7 +257,7 @@ def main():
     rows = []
     with ProcessPoolExecutor(
         max_workers=args.workers, mp_context=mp.get_context("spawn"),
-        initializer=initialize, initargs=(args.config, args.flight, args.coordinator)
+        initializer=initialize, initargs=(args.config, args.flight, args.coordinator, args.peer)
     ) as pool:
         futures = [pool.submit(episode, *task) for task in tasks]
         for future in as_completed(futures):

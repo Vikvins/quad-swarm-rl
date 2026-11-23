@@ -65,6 +65,11 @@ class LearnedPriority(DynamicPriority):
         return _RANKER.bid(torch.cat((hidden, pooled), dim=-1)).squeeze(-1).numpy()
 
 
+class FixedPriority(DynamicPriority):
+    def _priority(self, distance, critic_values):
+        return -self.ids[:, 0]
+
+
 def record_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
     staged = path.with_suffix(".tmp")
@@ -91,7 +96,8 @@ def episode(agents, layout, mode, output):
             torch.manual_seed(SEED)
             for i, drone in enumerate(core.envs):
                 drone._seed(1000 * SEED + i)
-            coordinator = LearnedPriority(core, DynamicPriorityConfig()) if mode == "coordinator" else None
+            ranking = {"coordinator": LearnedPriority, "fixed_rank_local": FixedPriority}.get(mode)
+            coordinator = ranking(core, DynamicPriorityConfig()) if ranking else None
             brake = PriorityBrake(core, BrakeConfig()) if mode == "static_brake" else None
             obs, _ = env.reset()
             plan = core.layout_plan
@@ -155,21 +161,21 @@ def write_csv(path, rows):
         writer.writerows(rows)
 
 
-def summarize(rows, output, layouts):
-    keys = {(n, layout["id"], mode) for n in AGENT_COUNTS for layout in layouts for mode in MODES}
+def summarize(rows, output, layouts, modes):
+    keys = {(n, layout["id"], mode) for n in AGENT_COUNTS for layout in layouts for mode in modes}
     index = {(r["agents"], r["layout_id"], r["mode"]): r for r in rows}
     if len(rows) != len(index) or index.keys() != keys:
         raise RuntimeError("The comparison is missing scenes or has duplicate results")
     for n in AGENT_COUNTS:
         for layout in layouts:
-            if len({index[n, layout["id"], mode]["layout_sha256"] for mode in MODES}) != 1:
+            if len({index[n, layout["id"], mode]["layout_sha256"] for mode in modes}) != 1:
                 raise ValueError(f"Scenario differs across modes for {n} / {layout['id']}")
     metrics = ("success_rate", "collision_rate", "neighbor_collision_rate", "obstacle_collision_rate",
                "timeout_rate", "stalled_rate", "hold_fraction")
     summary = []
     for n in AGENT_COUNTS:
         for kind in ("corridor", "dead_end", "all"):
-            for mode in MODES:
+            for mode in modes:
                 group = [r for r in rows if r["agents"] == n and r["mode"] == mode
                          and (kind == "all" or r["kind"] == kind)]
                 summary.append(dict(agents=n, kind=kind, mode=mode, scenes=len(group),
@@ -187,12 +193,13 @@ def main():
     parser.add_argument("--coordinator", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=16)
+    parser.add_argument("--modes", nargs="+", choices=(*MODES, "fixed_rank_local"), default=MODES)
     args = parser.parse_args()
     layouts = [layout for layout in catalogue() if layout["paired_with"] is not None]
     if len(layouts) != 16:
         raise RuntimeError("Expected eight paired corridor/dead-end layouts")
     manifest = dict(
-        agents=list(AGENT_COUNTS), modes=list(MODES), seed=SEED, duration=DURATION,
+        agents=list(AGENT_COUNTS), modes=list(args.modes), seed=SEED, duration=DURATION,
         layouts=[layout["id"] for layout in layouts], static_brake=vars(BrakeConfig()),
         files={file.name: hashlib.sha256(file.read_bytes()).hexdigest()
                for file in (args.config, args.flight, args.coordinator, Path(__file__), Path(__file__).with_name("priority_brake.py"))},
@@ -201,7 +208,7 @@ def main():
     if manifest_path.is_file() and json.loads(manifest_path.read_text()) != manifest:
         raise ValueError("Refusing to merge results from different configurations")
     record_json(manifest_path, manifest)
-    tasks = [(n, layout, mode, args.output) for n in reversed(AGENT_COUNTS) for layout in layouts for mode in MODES]
+    tasks = [(n, layout, mode, args.output) for n in reversed(AGENT_COUNTS) for layout in layouts for mode in args.modes]
     rows = []
     with ProcessPoolExecutor(
         max_workers=args.workers, mp_context=mp.get_context("spawn"),
@@ -213,8 +220,8 @@ def main():
             rows.append(row)
             print(f"{len(rows)}/{len(tasks)} N={row['agents']} {row['layout_id']} {row['mode']} "
                   f"success={row['success_rate']:.3f} wall={row['wall_seconds']:.1f}s", flush=True)
-    summarize(rows, args.output, layouts)
-    print("96 paired-mode episodes complete. Scene geometry verified across all modes.", flush=True)
+    summarize(rows, args.output, layouts, args.modes)
+    print(f"{len(tasks)} episodes complete.", flush=True)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,46 @@
+{
+  "agents": [
+    8,
+    100
+  ],
+  "modes": [
+    "baseline",
+    "static_brake",
+    "coordinator"
+  ],
+  "seed": 50000,
+  "duration": 15.0,
+  "layouts": [
+    "straight_open",
+    "straight_deadend",
+    "narrow_open",
+    "narrow_deadend",
+    "elbow_open",
+    "elbow_deadend",
+    "zigzag_open",
+    "zigzag_deadend",
+    "funnel_open",
+    "funnel_deadend",
+    "wide_u_open",
+    "wide_u_deadend",
+    "fork_open",
+    "fork_deadend",
+    "comb_open",
+    "comb_deadend"
+  ],
+  "static_brake": {
+    "horizon": 0.65,
+    "distance_scale": 1.8,
+    "stopping_time": 0.25,
+    "hold": 0.2,
+    "max_wait": 2.0,
+    "release": 0.5
+  },
+  "files": {
+    "baseline.json": "8c21f01ad541112fb109daf0bf13a471656cf2118b1f6a74f32068c439600d0a",
+    "baseline.pth": "f429fa60b70a82ba1aaf54ebbdd0f966d65995d46caf87e0fd8628e1f15b2524",
+    "priority.pt": "d1e478e67308cda0eae2ebfd4eecb92d422d0b35780f570b36e227a5ac752395",
+    "evaluate_priority.py": "42059ca0d4050265e2b821072d47e2efff29b8d2503191a03c1b742dbc285dfb",
+    "priority_brake.py": "1b5e1d71d4564724279e5cca86a8345e4bef685499ab433909e1a656252e07a1"
+  }
+}

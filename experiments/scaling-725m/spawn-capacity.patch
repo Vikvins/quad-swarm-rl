@@ -1,0 +1,49 @@
+--- a/gym_art/quadrotor_multi/obstacles/suite_layouts.py
++++ b/gym_art/quadrotor_multi/obstacles/suite_layouts.py
+@@ -4,10 +4,11 @@
+ 3D collision primitive is introduced into a policy trained with planar SDF.
+ """
+ from dataclasses import replace
++import math
+ import numpy as np
+
+ from gym_art.quadrotor_multi.obstacles.layouts import (
+-    LayoutPlan, _wall, _zone, validate_layout,
++    LayoutPlan, _axis, _wall, _zone, validate_layout,
+ )
+
+
+@@ -115,9 +116,15 @@
+             if not capped: portals.append(_portal(last,last-prev,a))
+             segments = _union_boundary(_rectangles(path,a),portals)
+     pad = spec.agent_radius + spec.safety_margin + spec.grid_resolution
+-    # Enough vertical capacity for 100 drones even in the 0.9 m control.
+-    spec = replace(spec, z_min=1., z_max=4.)
++    # Keep the same horizontal zones and clearance. Add vertical spawn slots
++    # only when the original 1–4 m band cannot hold the requested swarm.
+     half = spec.width/2-pad
++    slots_per_level = len(_axis(-half, half, spec.spawn_separation)) * len(_axis(-.9, .9, spec.spawn_separation))
++    levels = math.ceil(spec.num_agents / slots_per_level)
++    ceiling = max(4., 1. + (levels - 1) * spec.spawn_separation)
++    if ceiling > spec.room_dims[2] - spec.agent_radius - spec.safety_margin:
++        raise ValueError("Cannot fit the requested swarm under the room ceiling at the original spacing")
++    spec = replace(spec, z_min=1., z_max=ceiling)
+     def zone(center, angle):
+         points = _zone((-half,half),(-.9,.9),spec,rng)
+         rad = np.deg2rad(angle)
+--- a/swarm_rl/run_layout_suite.py
++++ b/swarm_rl/run_layout_suite.py
+@@ -293,11 +293,11 @@
+     os.environ.setdefault('METRICS_TB_EVERY','10')
+     os.environ.setdefault('METRICS_TB_AGENTS','0')
+     project=Path(__file__).resolve().parents[1]
+-    manifest=dict(code_base_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=project,text=True).strip(),
++    manifest=dict(code_base_commit='f943b405f9bfa75478c9967024f71e38a9aa980c',
+                   metrics_source_commit='280800367d868d888424a1cab573f98a2d1e87d6',
+                   checkpoint=str(args.checkpoint.resolve()),checkpoint_sha256=hashlib.sha256(args.checkpoint.read_bytes()).hexdigest(),
+                   original_config_sha256=hashlib.sha256(args.config.read_bytes()).hexdigest(),
+-                  checkpoint_env_steps=1000005120,arguments={k:str(v) for k,v in vars(args).items()},
++                  checkpoint_env_steps=int(args.checkpoint.stem.rsplit('_', 1)[1]),arguments={k:str(v) for k,v in vars(args).items()},
+                   torch=torch.__version__,numpy=np.__version__,python=platform.python_version(),platform=platform.platform(),
+                   diagnostics='Formulas from drone_metrics.py and drone_influence.py; CSV all agents/all steps, TensorBoard swarm means every 10 ticks',
+                   numba_random_seeded=True,policy='deterministic frozen weights',

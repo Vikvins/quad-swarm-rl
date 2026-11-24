@@ -1,0 +1,14 @@
+experiment,seed,layout,mode,neighbor_contacts_by_1s,neighbor_contacts_by_1p5s,neighbor_contacts_by_3s,safe_arrivals
+fork-start-heights-20261124,50000,fork_open,height_rows,2,29,63,9
+fork-start-heights-20261124,50000,fork_open,rows,6,35,71,11
+fork-start-heights-20261124,50000,fork_open,simultaneous,21,48,78,8
+two-way-start-heights-20261124,50000,straight_open,climb_then_rows,4,4,6,40
+two-way-start-heights-20261124,50000,straight_open,height,7,23,30,38
+two-way-start-heights-20261124,50000,straight_open,height_rows,8,11,22,43
+two-way-start-heights-20261124,50000,straight_open,rows,10,16,34,44
+two-way-start-heights-20261124,50000,straight_open,simultaneous,10,26,35,48
+two-way-start-heights-20261124,50001,straight_open,climb_then_rows,2,3,5,39
+two-way-start-heights-20261124,50001,straight_open,height,13,21,41,27
+two-way-start-heights-20261124,50001,straight_open,height_rows,0,4,17,50
+two-way-start-heights-20261124,50001,straight_open,rows,4,8,14,58
+two-way-start-heights-20261124,50001,straight_open,simultaneous,10,19,45,45

@@ -56,7 +56,9 @@ def initialize(config, flight_path, coordinator_path, peer_path=None):
         _RANKER.eval()
     if peer_path:
         _PEER_CHECKPOINT = torch.load(peer_path, map_location="cpu", weights_only=True)
-        if _PEER_CHECKPOINT["arguments"]["mode"] != "peer" or _PEER_CHECKPOINT["progress"]["steps"] < 1_000_000_000:
+        arguments = _PEER_CHECKPOINT["arguments"]
+        target = arguments.get("train_steps") or 1_000_000_000
+        if arguments["mode"] != "peer" or _PEER_CHECKPOINT["progress"]["steps"] < target:
             raise ValueError("Expected the completed peer checkpoint")
 
 
@@ -76,24 +78,33 @@ class FixedPriority(DynamicPriority):
         return -self.ids[:, 0]
 
 
-class PeerWithChannelOff:
-    def __init__(self, core, observations):
+class PeerPriority:
+    def __init__(self, core, observations, channel_enabled):
         self.core = core
+        self.channel_enabled = channel_enabled
         features = torch.as_tensor(observations, dtype=torch.float32)
-        self.policy = PriorityPolicy("peer", features.shape[-1], core.num_use_neighbor_obs)
+        gain = _PEER_CHECKPOINT["arguments"].get("peer_message_gain", 1.0)
+        self.policy = PriorityPolicy("peer", features.shape[-1], core.num_use_neighbor_obs, gain)
         self.policy.load_state_dict(_PEER_CHECKPOINT["policy"], strict=True)
         self.policy.eval()
         self.goal_control = GoalControl("peer", (None, core.pos[None]), core.control_dt, core.collision_threshold)
         self.no_messages = features.new_zeros((len(features), core.num_use_neighbor_obs + 2))
+        self.channel_flag = features.new_ones((len(features), 1))
         self.episode_ended = np.array([False])
         self.yield_ticks = 0
 
     def policy_inputs(self, model, observations, states):
         features = torch.as_tensor(np.asarray(observations), dtype=torch.float32)
         hidden = self.policy.encode(features)
-        logits = self.policy.decide(torch.cat((hidden, self.no_messages), dim=-1))
-        wait = logits[:, 0].numpy() > 0
         core = self.core
+        channel = self.no_messages
+        if self.channel_enabled:
+            bid = self.policy.bid(hidden)[:, 0]
+            neighbors = torch.as_tensor(core.priority_neighbors, dtype=torch.long)
+            signals = torch.cat((bid[:, None], bid[neighbors]), dim=-1).tanh() * self.policy.message_gain
+            channel = torch.cat((signals, self.channel_flag), dim=-1)
+        logits = self.policy.decide(torch.cat((hidden, channel), dim=-1))
+        wait = logits[:, 0].numpy() > 0
         goals = np.asarray([drone.goal for drone in core.envs], dtype=np.float32)
         state = (None, core.pos[None], core.vel[None], goals[None], None)
         self.yield_ticks += int(np.count_nonzero((self.goal_control.remaining[0] > 0) | wait))
@@ -110,7 +121,7 @@ def record_json(path, value):
     staged.replace(path)
 
 
-def episode(agents, layout, mode, output):
+def episode(agents, layout, mode, output, *, flight_state=None, controller_factory=None):
     layout_id = layout["id"]
     result_path = output / "scenes" / f"n{agents}" / layout_id / f"{mode}.json"
     if result_path.is_file():
@@ -131,13 +142,17 @@ def episode(agents, layout, mode, output):
                 drone._seed(1000 * SEED + i)
             ranking = {"coordinator": LearnedPriority, "fixed_rank_local": FixedPriority}.get(mode)
             coordinator = ranking(core, DynamicPriorityConfig()) if ranking else None
+            if controller_factory is not None:
+                coordinator = controller_factory(core)
             brake = PriorityBrake(core, BrakeConfig()) if mode == "static_brake" else None
+            if mode == "peer_on":
+                core.track_priority_neighbors = True
             obs, _ = env.reset()
-            if mode == "peer_off":
-                coordinator = PeerWithChannelOff(core, np.asarray(obs))
+            if mode in ("peer_on", "peer_off"):
+                coordinator = PeerPriority(core, np.asarray(obs), channel_enabled=(mode == "peer_on"))
             plan = core.layout_plan
             model = create_actor_critic(cfg, gym.spaces.Dict({"obs": env.observation_space}), env.action_space)
-            model.load_state_dict(_FLIGHT_STATE, strict=True)
+            model.load_state_dict(_FLIGHT_STATE if flight_state is None else flight_state, strict=True)
             model.eval()
             states = torch.zeros(agents, get_rnn_size(cfg))
             metrics = LayoutMetrics(plan, core.control_dt, core.collision_threshold)
@@ -229,12 +244,13 @@ def main():
     parser.add_argument("--peer", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=16)
-    parser.add_argument("--modes", nargs="+", choices=(*MODES, "fixed_rank_local", "peer_off"), default=MODES)
+    parser.add_argument("--modes", nargs="+", choices=(*MODES, "fixed_rank_local", "peer_off", "peer_on"), default=MODES)
     args = parser.parse_args()
     if "coordinator" in args.modes and not args.coordinator:
         parser.error("The coordinator mode requires --coordinator")
-    if "peer_off" in args.modes and not args.peer:
-        parser.error("The peer_off mode requires --peer")
+    peer_modes = {"peer_off", "peer_on"}.intersection(args.modes)
+    if peer_modes and not args.peer:
+        parser.error("Peer modes require --peer")
     layouts = [layout for layout in catalogue() if layout["paired_with"] is not None]
     if len(layouts) != 16:
         raise RuntimeError("Expected eight paired corridor/dead-end layouts")
@@ -245,8 +261,8 @@ def main():
                for file in (args.config, args.flight, args.coordinator, args.peer, Path(__file__),
                             Path(__file__).with_name("priority_brake.py")) if file},
     )
-    if "peer_off" in args.modes:
-        manifest["peer_channel"] = "off"
+    if peer_modes:
+        manifest["peer_channel"] = "both" if len(peer_modes) == 2 else next(iter(peer_modes)).removeprefix("peer_")
         trainer = Path(__file__).with_name("train_priority.py")
         manifest["files"][trainer.name] = hashlib.sha256(trainer.read_bytes()).hexdigest()
     manifest_path = args.output / "manifest.json"

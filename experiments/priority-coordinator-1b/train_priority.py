@@ -24,7 +24,7 @@ from swarm_rl.evaluate_layouts import load_checkpoint
 from swarm_rl.train import register_swarm_components
 
 
-def run_arena(connection, cfg, seed):
+def run_arena(connection, cfg, seed, report_positions=False):
     np.random.seed(seed)
     seed_numba(seed)
     with connection, open(os.devnull, "w") as silent, redirect_stdout(silent):
@@ -52,14 +52,19 @@ def run_arena(connection, cfg, seed):
             done = bool(np.any(terminated) or np.any(truncated))
             if done:
                 goals[:] = [drone.goal for drone in core.envs]
-            connection.send((snapshot(), np.asarray(reward, dtype=np.float32), done))
+            result = (snapshot(), np.asarray(reward, dtype=np.float32), done)
+            if report_positions:
+                end_positions = core.layout_terminal_state["positions"] if done else core.pos
+                result += (end_positions.astype(np.float32),)
+            connection.send(result)
         env.close()
 
 
 class PriorityPolicy(nn.Module):
-    def __init__(self, mode, obs_width, neighbors):
+    def __init__(self, mode, obs_width, neighbors, message_gain=1.0):
         super().__init__()
         self.mode = mode
+        self.message_gain = message_gain
         self.encode = nn.Sequential(nn.Linear(obs_width, 64), nn.Tanh())
         self.bid = nn.Linear(128 if mode == "coordinator" else 64, 1)
         self.decide = nn.Sequential(nn.Linear(66 + neighbors, 64), nn.Tanh(), nn.Linear(64, 1))
@@ -78,14 +83,17 @@ class PriorityPolicy(nn.Module):
         if self.mode == "coordinator":
             return bid, torch.zeros_like(bid), log_prob, value
 
+        decision = self.wait_distribution(hidden, bid, neighbors, enabled)
+        wait = decision.sample() if wait is None else wait
+        return bid, wait, log_prob * enabled + decision.log_prob(wait), value
+
+    def wait_distribution(self, hidden, bid, neighbors, enabled):
         # Neighbor slots are exactly those in the existing local observation.
         neighbors_bid = torch.gather(bid, -1, neighbors.flatten(-2)).reshape_as(neighbors)
         signal = torch.cat((bid.unsqueeze(-1), neighbors_bid), dim=-1)
-        received = signal.tanh() * enabled.unsqueeze(-1)
+        received = signal.tanh() * enabled.unsqueeze(-1) * self.message_gain
         flags = enabled.expand_as(bid).unsqueeze(-1)
-        decision = Bernoulli(logits=self.decide(torch.cat((hidden, received, flags), dim=-1)).squeeze(-1))
-        wait = decision.sample() if wait is None else wait
-        return bid, wait, log_prob * enabled + decision.log_prob(wait), value
+        return Bernoulli(logits=self.decide(torch.cat((hidden, received, flags), dim=-1)).squeeze(-1))
 
 
 class GoalControl:
@@ -136,15 +144,15 @@ def stack_states(states):
     return tuple(np.stack(field) for field in zip(*states))
 
 
-def save_checkpoint(path, policy, optimizer, args, progress):
+def save_checkpoint(path, policy, optimizer, args, progress, **extra_state):
     temporary = path.with_suffix(".tmp")
     arguments = {key: str(value) if isinstance(value, Path) else value for key, value in vars(args).items()}
     torch.save(dict(policy=policy.state_dict(), optimizer=optimizer.state_dict(),
-                    arguments=arguments, progress=progress), temporary)
+                    arguments=arguments, progress=progress, **extra_state), temporary)
     temporary.replace(path)
 
 
-def optimize(policy, optimizer, rollout, last_value):
+def optimize(policy, optimizer, rollout, last_value, auxiliary=None):
     features, neighbors, enabled, bids, waits, old_log_prob, values, rewards, alive = (
         torch.stack(items) for items in zip(*rollout)
     )
@@ -157,6 +165,12 @@ def optimize(policy, optimizer, rollout, last_value):
         last_value = values[step]
     returns = advantages + values
     advantages = (advantages - advantages.mean()) / advantages.std().clamp_min(1e-6)
+    auxiliary_value = None
+    if auxiliary is not None:
+        from peer_channel_objective import channel_loss
+
+        supervision, weight = auxiliary
+        conflicts, priorities = (torch.stack(items) for items in zip(*supervision))
     for _ in range(2):
         for batch in torch.randperm(len(values), device=values.device).split(16):
             _, _, log_prob, value = policy(features[batch], neighbors[batch], enabled[batch],
@@ -165,11 +179,15 @@ def optimize(policy, optimizer, rollout, last_value):
             unclipped = ratio * advantages[batch]
             clipped = ratio.clamp(.8, 1.2) * advantages[batch]
             loss = -torch.minimum(unclipped, clipped).mean() + .5 * (value - returns[batch]).square().mean()
+            if auxiliary is not None:
+                auxiliary_value = channel_loss(policy, features[batch], neighbors[batch], enabled[batch],
+                                               conflicts[batch], priorities[batch])
+                loss = loss + weight * auxiliary_value
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
             nn.utils.clip_grad_norm_(policy.parameters(), .5)
             optimizer.step()
-    return float(loss.detach())
+    return float(loss.detach()), None if auxiliary_value is None else float(auxiliary_value.detach())
 
 
 def train(args, connections, first, cfg, resume):
@@ -187,7 +205,7 @@ def train(args, connections, first, cfg, resume):
     recurrent = torch.zeros(int(np.prod(swarm_shape)), get_rnn_size(cfg), device=device)
     control = GoalControl(args.mode, state, control_dt, threshold)
     features_width = 9 if args.mode == "coordinator" else state[0].shape[-1]
-    policy = PriorityPolicy(args.mode, features_width, state[-1].shape[-1]).to(device)
+    policy = PriorityPolicy(args.mode, features_width, state[-1].shape[-1], args.peer_message_gain).to(device)
     optimizer = torch.optim.Adam(policy.parameters(), lr=3e-4)
     if resume:
         policy.load_state_dict(resume["policy"])
@@ -208,6 +226,8 @@ def train(args, connections, first, cfg, resume):
     next_milestone = (total_steps // args.milestone_steps + 1) * args.milestone_steps
     swarm_size = int(np.prod(swarm_shape))
     rates = []
+    if args.peer_use_loss > 0:
+        from peer_channel_objective import conflict_supervision
     measured_start = time.perf_counter()
     steps_at_start = total_steps
 
@@ -231,6 +251,7 @@ def train(args, connections, first, cfg, resume):
             steps_at_start = total_steps
         begun = time.perf_counter()
         rollout = []
+        supervision = []
         ticks = args.rollout
         if args.train_steps is not None:
             remaining_ticks = (args.train_steps - total_steps + swarm_size - 1) // swarm_size
@@ -238,6 +259,8 @@ def train(args, connections, first, cfg, resume):
         for _ in range(ticks):
             with torch.no_grad():
                 inputs = policy_input()
+                if args.peer_use_loss > 0:
+                    supervision.append(conflict_supervision(state, device))
                 bids, waits, log_prob, value = policy(*inputs)
                 offsets = control.offsets(state, bids.cpu().numpy(), waits.cpu().numpy(), done)
                 observation = torch.as_tensor(state[0], device=device).clone()
@@ -265,7 +288,8 @@ def train(args, connections, first, cfg, resume):
             total_steps += swarm_size
         with torch.no_grad():
             last_value = policy(*policy_input())[-1]
-        loss = optimize(policy, optimizer, rollout, last_value)
+        auxiliary = (supervision, args.peer_use_loss) if supervision else None
+        loss, auxiliary_loss = optimize(policy, optimizer, rollout, last_value, auxiliary)
         torch.cuda.synchronize()
         wall = time.perf_counter() - begun
         steps_per_update = ticks * swarm_size
@@ -282,9 +306,12 @@ def train(args, connections, first, cfg, resume):
                 milestone = args.output / f"checkpoint_{total_steps:012d}.pt"
                 save_checkpoint(milestone, policy, optimizer, args, training_progress())
                 next_milestone = (total_steps // args.milestone_steps + 1) * args.milestone_steps
-        print(json.dumps(dict(update=update, steps=total_steps, fps=round(steps_per_update / wall),
-                              episodes=episodes, mean_loss=round(loss, 5), measured=warmed_up,
-                              wall_time=time.time())), flush=True)
+        metrics = dict(update=update, steps=total_steps, fps=round(steps_per_update / wall),
+                       episodes=episodes, mean_loss=round(loss, 5), measured=warmed_up,
+                       wall_time=time.time())
+        if auxiliary_loss is not None:
+            metrics["peer_auxiliary_loss"] = round(auxiliary_loss, 5)
+        print(json.dumps(metrics), flush=True)
         if args.train_steps is None and rates and time.perf_counter() - measured_start >= args.seconds:
             break
     wall = time.perf_counter() - measured_start
@@ -307,9 +334,13 @@ def train(args, connections, first, cfg, resume):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=("coordinator", "peer"))
+    parser.add_argument("mode", choices=("coordinator", "peer", "pair"))
     parser.add_argument("--config", type=Path, required=True)
-    parser.add_argument("--flight-checkpoint", type=Path, required=True)
+    parser.add_argument("--flight-checkpoint", type=Path)
+    parser.add_argument("--train-flight", action="store_true",
+                        help="Train the flight policy from scratch alongside the pair coordinator")
+    parser.add_argument("--peer-message-gain", type=float, default=1.0)
+    parser.add_argument("--peer-use-loss", type=float, default=0.0)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--agents", type=int, default=100)
     parser.add_argument("--arenas", type=int, default=6)
@@ -321,17 +352,47 @@ def main():
     parser.add_argument("--checkpoint-steps", type=int, default=5_000_000)
     parser.add_argument("--milestone-steps", type=int, default=100_000_000)
     parser.add_argument("--seed", type=int, default=417)
+    parser.add_argument("--pairs", type=int, default=64)
+    parser.add_argument("--horizon", type=float, default=.25)
+    parser.add_argument("--refresh", type=float, default=.10)
     args = parser.parse_args()
+    if args.train_flight and (args.mode != "pair" or args.flight_checkpoint):
+        parser.error("--train-flight requires pair mode and starts from random flight weights")
+    if not args.train_flight and not args.flight_checkpoint:
+        parser.error("--flight-checkpoint is required when the flight policy is frozen")
+    if not np.isfinite(args.peer_message_gain) or args.peer_message_gain <= 0:
+        parser.error("--peer-message-gain must be finite and positive")
+    if not np.isfinite(args.peer_use_loss) or args.peer_use_loss < 0:
+        parser.error("--peer-use-loss must be finite and nonnegative")
+    if args.mode != "peer" and (args.peer_message_gain != 1.0 or args.peer_use_loss != 0.0):
+        parser.error("The message settings require peer mode")
     if args.train_steps is not None and min(args.train_steps, args.checkpoint_steps, args.milestone_steps) < 1:
         parser.error("Training and checkpoint step counts must be positive")
+    if args.mode == "pair" and (args.agents < 2 or min(args.pairs, args.horizon, args.refresh) <= 0):
+        parser.error("Pair coordination needs at least two agents and positive pair settings")
     args.output.mkdir(parents=True, exist_ok=args.train_steps is not None)
     latest = args.output / "latest.pt"
     resume = (torch.load(latest, map_location="cpu", weights_only=True)
               if args.train_steps is not None and latest.is_file() else None)
     if resume:
-        for name in ("mode", "agents", "arenas", "layouts", "rollout", "seed"):
+        if resume["arguments"].get("train_flight", False) != args.train_flight:
+            raise ValueError("Cannot change whether flight is trained on resume")
+        if (resume["arguments"].get("peer_message_gain", 1.0), resume["arguments"].get("peer_use_loss", 0.0)) != (
+            args.peer_message_gain, args.peer_use_loss
+        ):
+            raise ValueError("Cannot change the message objective on resume")
+        settings = ("mode", "agents", "layouts", "rollout", "seed")
+        if args.mode == "pair":
+            settings += ("pairs", "horizon", "refresh")
+        else:
+            settings += ("arenas",)
+        for name in settings:
             if resume["arguments"][name] != getattr(args, name):
                 raise ValueError(f"Cannot resume with a different {name}")
+        previous_arenas = resume["arguments"]["arenas"]
+        if previous_arenas != args.arenas:
+            print(json.dumps(dict(event="resume_arena_change", steps=resume["progress"]["steps"],
+                                  previous_arenas=previous_arenas, arenas=args.arenas)), flush=True)
     register_swarm_components()
     config = json.loads(args.config.read_text())
     cfg = make_suite_config(config, args.layouts[0], args.agents, 15.)
@@ -347,13 +408,19 @@ def main():
             previous_updates = resume["progress"]["updates"] if resume else 0
             arena_cfg.layout_seed = args.seed + 7919 * i + args.arenas * previous_updates
             arena_cfg.quads_static_priority = "off"
-            process = context.Process(target=run_arena, args=(child, arena_cfg, arena_cfg.layout_seed))
+            process = context.Process(target=run_arena,
+                                      args=(child, arena_cfg, arena_cfg.layout_seed, args.mode == "pair"))
             process.start()
             child.close()
             children.append(process)
             connections.append(parent)
         first = [connection.recv() for connection in connections]
-        train(args, connections, first, cfg, resume)
+        if args.mode == "pair":
+            from train_pair_priority import train_pair
+
+            train_pair(args, connections, first, cfg, resume, save_checkpoint, stack_states)
+        else:
+            train(args, connections, first, cfg, resume)
     finally:
         for connection in connections:
             try:

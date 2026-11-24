@@ -1,0 +1,48 @@
+{
+  "agents": [
+    8,
+    100
+  ],
+  "modes": [
+    "pair_learned",
+    "pair_fixed_id",
+    "baseline_trained8_100m",
+    "baseline_trained100_100m",
+    "baseline_trained100_1b"
+  ],
+  "seed": 50000,
+  "duration": 15.0,
+  "layouts": [
+    "straight_open",
+    "straight_deadend",
+    "narrow_open",
+    "narrow_deadend",
+    "elbow_open",
+    "elbow_deadend",
+    "zigzag_open",
+    "zigzag_deadend",
+    "funnel_open",
+    "funnel_deadend",
+    "wide_u_open",
+    "wide_u_deadend",
+    "fork_open",
+    "fork_deadend",
+    "comb_open",
+    "comb_deadend"
+  ],
+  "learned_priorities": "mean",
+  "reference_mode": "baseline_trained100_1b",
+  "files": {
+    "config.json": "8c21f01ad541112fb109daf0bf13a471656cf2118b1f6a74f32068c439600d0a",
+    "checkpoint_000781254_1000005120.pth": "f429fa60b70a82ba1aaf54ebbdd0f966d65995d46caf87e0fd8628e1f15b2524",
+    "checkpoint_000100000000.pt": "6a4b19066396b6feefdb53934176d1a792c01a41a33311c0ab42807ce0184741",
+    "checkpoint_000097660_100003840.pth": "2b4c3a822327c7a983871156b5b22724caa54e9af78b46486a05da4c201f08c0",
+    "checkpoint_000078128_100003840.pth": "ca56b3f066d9b2ad507be6328ef2fed9a0a156f943f6aa0130191b5305c59042",
+    "episodes.csv": "ad3b821c2754d5c900650ff82cb7430c43dd288f6d95b1ade96dc9c2beeecb5e",
+    "manifest.json": "ecee2a31801f929abfcaa0e799e76acae5de0bcbd3f7be353b999d741a452ff6",
+    "evaluate_pair_checkpoint.py": "b786f05ca4da34ecc687771d2287e6e8e49ed5a6e51f2f3cf83f90ae7248b87e",
+    "evaluate_priority.py": "1ddae85919d3e91850737a8a437797c59b49a98fdb06928394722fff96aaf83b",
+    "pair_priority.py": "0acb28d1c58559013cc4d246cdf27b99d2ac1f63e5afe4461d3dfdeb097ccff8",
+    "train_priority.py": "69608b191274a268f25464af69bdfc991f9a42d9b112acbde9b6cfb3ebca3c07"
+  }
+}

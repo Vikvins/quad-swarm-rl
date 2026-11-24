@@ -1,0 +1,61 @@
+episodes 64
+corridor baseline 8 safe 123
+  first_any_counts at zero, by0.5, by1, by1.5, by3, by15 / totals: [0, 20, 208, 381, 532, 675] 800
+  first_by1 neighbor, obstacle, room: [202, 26, 1]
+  typical nearest_start 0.2999999999999998 0.2999999999999998 threshold 0.09192388155425119 minimum wall clearance 0.24596194077712524
+corridor peer_off 8 safe 142
+  first_any_counts at zero, by0.5, by1, by1.5, by3, by15 / totals: [0, 20, 208, 381, 524, 658] 800
+  first_by1 neighbor, obstacle, room: [202, 26, 1]
+  typical nearest_start 0.2999999999999998 0.2999999999999998 threshold 0.09192388155425119 minimum wall clearance 0.24596194077712524
+  decisions on/off/different/only_messages/replace_neighbor_messages/saturation [0.6591, 0.6691, 0.0209, 0.0232, 0.0185, 37.3289]
+  logit_change messages/flag, mean raw bid std and abs [0.073, 0.0154] [1.0735, 2.1441]
+  drone first neighbor by1.5, had already requested a hold 370 0
+corridor peer_on 8 safe 143
+  first_any_counts at zero, by0.5, by1, by1.5, by3, by15 / totals: [0, 20, 208, 381, 531, 657] 800
+  first_by1 neighbor, obstacle, room: [202, 26, 1]
+  typical nearest_start 0.2999999999999998 0.2999999999999998 threshold 0.09192388155425119 minimum wall clearance 0.24596194077712524
+  decisions on/off/different/only_messages/replace_neighbor_messages/saturation [0.4234, 0.435, 0.0134, 0.0161, 0.008, 37.5058]
+  logit_change messages/flag, mean raw bid std and abs [0.07, 0.015] [1.052, 2.1518]
+  drone first neighbor by1.5, had already requested a hold 370 0
+corridor static_brake 8 safe 186
+  first_any_counts at zero, by0.5, by1, by1.5, by3, by15 / totals: [0, 20, 182, 317, 455, 605] 800
+  first_by1 neighbor, obstacle, room: [179, 18, 3]
+  typical nearest_start 0.2999999999999998 0.2999999999999998 threshold 0.09192388155425119 minimum wall clearance 0.24596194077712524
+dead_end baseline 8 safe 0
+  first_any_counts at zero, by0.5, by1, by1.5, by3, by15 / totals: [0, 20, 208, 394, 570, 789] 800
+  first_by1 neighbor, obstacle, room: [198, 30, 1]
+  typical nearest_start 0.2999999999999998 0.2999999999999998 threshold 0.09192388155425119 minimum wall clearance 0.24596194077712524
+dead_end peer_off 8 safe 0
+  first_any_counts at zero, by0.5, by1, by1.5, by3, by15 / totals: [0, 20, 208, 394, 564, 791] 800
+  first_by1 neighbor, obstacle, room: [198, 30, 1]
+  typical nearest_start 0.2999999999999998 0.2999999999999998 threshold 0.09192388155425119 minimum wall clearance 0.24596194077712524
+  decisions on/off/different/only_messages/replace_neighbor_messages/saturation [5.777, 5.878, 0.112, 0.1588, 0.0365, 64.5901]
+  logit_change messages/flag, mean raw bid std and abs [0.1864, 0.0408] [1.2809, 3.6347]
+  drone first neighbor by1.5, had already requested a hold 377 0
+dead_end peer_on 8 safe 0
+  first_any_counts at zero, by0.5, by1, by1.5, by3, by15 / totals: [0, 20, 208, 394, 572, 787] 800
+  first_by1 neighbor, obstacle, room: [198, 30, 1]
+  typical nearest_start 0.2999999999999998 0.2999999999999998 threshold 0.09192388155425119 minimum wall clearance 0.24596194077712524
+  decisions on/off/different/only_messages/replace_neighbor_messages/saturation [6.5084, 6.6163, 0.1179, 0.1641, 0.0424, 65.273]
+  logit_change messages/flag, mean raw bid std and abs [0.1852, 0.0424] [1.293, 3.6407]
+  drone first neighbor by1.5, had already requested a hold 377 0
+dead_end static_brake 8 safe 0
+  first_any_counts at zero, by0.5, by1, by1.5, by3, by15 / totals: [0, 20, 185, 324, 485, 766] 800
+  first_by1 neighbor, obstacle, room: [178, 22, 3]
+  typical nearest_start 0.2999999999999998 0.2999999999999998 threshold 0.09192388155425119 minimum wall clearance 0.24596194077712524
+narrow_deadend baseline span [0.408, 1.8, 3.0] first neighbor 0.45 by1 42 by1.5 61 safe 0
+narrow_deadend peer_off span [0.408, 1.8, 3.0] first neighbor 0.45 by1 42 by1.5 61 safe 0
+narrow_deadend peer_on span [0.408, 1.8, 3.0] first neighbor 0.45 by1 42 by1.5 61 safe 0
+narrow_deadend static_brake span [0.408, 1.8, 3.0] first neighbor 0.44 by1 39 by1.5 56 safe 0
+narrow_open baseline span [0.408, 1.8, 3.0] first neighbor 0.45 by1 42 by1.5 61 safe 10
+narrow_open peer_off span [0.408, 1.8, 3.0] first neighbor 0.45 by1 42 by1.5 61 safe 10
+narrow_open peer_on span [0.408, 1.8, 3.0] first neighbor 0.45 by1 42 by1.5 61 safe 9
+narrow_open static_brake span [0.408, 1.8, 3.0] first neighbor 0.44 by1 39 by1.5 56 safe 19
+straight_open baseline span [1.108, 1.8, 3.0] first neighbor 0.62 by1 8 by1.5 35 safe 29
+straight_open peer_off span [1.108, 1.8, 3.0] first neighbor 0.62 by1 8 by1.5 35 safe 31
+straight_open peer_on span [1.108, 1.8, 3.0] first neighbor 0.62 by1 8 by1.5 35 safe 32
+straight_open static_brake span [1.108, 1.8, 3.0] first neighbor 0.76 by1 4 by1.5 30 safe 33
+zigzag_open baseline span [0.908, 1.8, 3.0] first neighbor 0.5 by1 30 by1.5 59 safe 0
+zigzag_open peer_off span [0.908, 1.8, 3.0] first neighbor 0.5 by1 30 by1.5 59 safe 0
+zigzag_open peer_on span [0.908, 1.8, 3.0] first neighbor 0.5 by1 30 by1.5 59 safe 0
+zigzag_open static_brake span [0.908, 1.8, 3.0] first neighbor 0.42 by1 42 by1.5 67 safe 0

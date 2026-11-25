@@ -1,0 +1,70 @@
+{
+  "status": "first_drop",
+  "start_horizon_s": 0.65,
+  "step_s": 0.05,
+  "stop_rule": "first decrease in total safe arrivals over the same 16 scenes",
+  "baseline": {
+    "corridor": {
+      "kind": "corridor",
+      "horizon_s": "0.65",
+      "episodes": "8",
+      "attempts": "800",
+      "safe_arrivals": "219",
+      "collisions": "563",
+      "timeouts": "322",
+      "contacts_by_1p5s": "280",
+      "neighbor_contacts_by_1p5s": "277",
+      "overflow_ticks": "9",
+      "hold_fraction": "0.22116922051965357"
+    },
+    "dead_end": {
+      "kind": "dead_end",
+      "horizon_s": "0.65",
+      "episodes": "8",
+      "attempts": "800",
+      "safe_arrivals": "0",
+      "collisions": "754",
+      "timeouts": "788",
+      "contacts_by_1p5s": "291",
+      "neighbor_contacts_by_1p5s": "285",
+      "overflow_ticks": "1070",
+      "hold_fraction": "0.3517246835443038"
+    }
+  },
+  "max_horizon_s": 15.0,
+  "iterations": [
+    {
+      "horizon_s": 0.7,
+      "results": {
+        "corridor": {
+          "kind": "corridor",
+          "horizon_s": "0.7",
+          "episodes": "8",
+          "attempts": "800",
+          "safe_arrivals": "212",
+          "collisions": "573",
+          "timeouts": "337",
+          "contacts_by_1p5s": "266",
+          "neighbor_contacts_by_1p5s": "258",
+          "overflow_ticks": "61",
+          "hold_fraction": "0.22893487674883412"
+        },
+        "dead_end": {
+          "kind": "dead_end",
+          "horizon_s": "0.7",
+          "episodes": "8",
+          "attempts": "800",
+          "safe_arrivals": "0",
+          "collisions": "743",
+          "timeouts": "788",
+          "contacts_by_1p5s": "270",
+          "neighbor_contacts_by_1p5s": "258",
+          "overflow_ticks": "990",
+          "hold_fraction": "0.3529197201865423"
+        }
+      },
+      "delta_safe_arrivals": -7,
+      "elapsed_seconds": 97.1
+    }
+  ]
+}

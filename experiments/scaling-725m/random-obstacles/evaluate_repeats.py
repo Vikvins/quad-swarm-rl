@@ -20,7 +20,7 @@ import evaluate_capacity
 from evaluate_capacity import evaluate
 
 
-SIZES = (200, 300)
+DEFAULT_SIZES = (200, 300)
 SCENES = range(50000, 50016)
 REPEATS = (1, 2, 3)
 CONDITIONS = dict(evaluate.CONDITIONS)
@@ -134,7 +134,8 @@ def summarize(output, paired):
     rows = [group[mode] for _, group in sorted(paired.items()) for mode in CONDITIONS]
     write_csv(output / "episodes.csv", rows)
     stats = []
-    for n in SIZES:
+    sizes = sorted({n for n, _, _ in paired})
+    for n in sizes:
         for mode in CONDITIONS:
             run = [r for r in rows if r["agents"] == n and r["condition"] == mode]
             stats.append(dict(agents=n, condition=mode, scenes=len(SCENES), repetitions=len(REPEATS),
@@ -146,12 +147,12 @@ def summarize(output, paired):
     write_csv(output / "summary.csv", stats)
 
     tests = []
-    for n in SIZES:
+    for n in sizes:
         for mode, duration in CONDITIONS.items():
             if duration == 0:
                 continue
             for group in ("all", "selected", "healthy"):
-                sizes = {"all": n, "selected": n // 4, "healthy": 3 * n // 4}
+                group_size = {"all": n, "selected": n // 4, "healthy": 3 * n // 4}[group]
                 deltas = []
                 for scene in SCENES:
                     difference = 0
@@ -169,7 +170,7 @@ def summarize(output, paired):
                 observed = sum(deltas)
                 p = sum(abs(item) >= abs(observed) for item in null) / len(null)
                 tests.append(dict(agents=n, condition=mode, outcome=group, scenes=len(SCENES),
-                                  delta_pp=100 * observed / (sizes[group] * len(SCENES) * len(REPEATS)),
+                                  delta_pp=100 * observed / (group_size * len(SCENES) * len(REPEATS)),
                                   p_value=p, holm_p_value=0.))
     adjusted = 0.
     for i, row in enumerate(sorted(tests, key=lambda r: r["p_value"])):
@@ -183,31 +184,35 @@ def main():
     for name in ("config", "checkpoint", "reference", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--workers", type=int, default=16)
+    parser.add_argument("--agents", type=int, choices=(8, 100, 200, 300), nargs="+", default=DEFAULT_SIZES)
     args = parser.parse_args()
+    sizes = tuple(dict.fromkeys(args.agents))
+    groups_per_size = len(SCENES) * len(REPEATS)
+    episodes_per_size = groups_per_size * len(CONDITIONS)
 
     refs = {}
-    for n in SIZES:
+    for n in sizes:
         source = args.reference / f"n{n}-episodes.csv"
         with source.open() as f:
             refs.update({(n, int(row["seed"])): row["scene_id"] for row in csv.DictReader(f)
-                         if row["condition"] == "clean"})
-    if set(refs) != {(n, seed) for n in SIZES for seed in SCENES}:
+                         if row["condition"] == "clean" and row["checkpoint"] == args.checkpoint.name})
+    if set(refs) != {(n, seed) for n in sizes for seed in SCENES}:
         raise ValueError("The reference files must contain the 16 original scenes per size")
 
     (args.output / "episodes").mkdir(parents=True, exist_ok=True)
-    metadata = dict(agents=list(SIZES), scene_seeds=list(SCENES), repeats=list(REPEATS),
+    metadata = dict(agents=list(sizes), scene_seeds=list(SCENES), repeats=list(REPEATS),
                     conditions=CONDITIONS, noise_seed_material=20261124,
                     files={f.name:file_hash(f)
                            for f in (args.config,args.checkpoint,Path(__file__),
                                      Path(evaluate.__file__),Path(evaluate_capacity.__file__))},
-                    reference_scenes={str(n): {str(seed):refs[n,seed] for seed in SCENES} for n in SIZES})
+                    reference_scenes={str(n): {str(seed):refs[n,seed] for seed in SCENES} for n in sizes})
     manifest = args.output / "manifest.json"
     if manifest.is_file() and json.loads(manifest.read_text()) != metadata:
         raise ValueError("Output directory contains a different experiment")
     atomic_json(manifest, metadata)
 
     tasks = [(n, scene, repeat, mode) for repeat in REPEATS for scene in SCENES
-             for mode in CONDITIONS for n in SIZES]
+             for mode in CONDITIONS for n in sizes]
     groups, pending = defaultdict(dict), []
     counts = defaultdict(int)
     def record(row):
@@ -217,7 +222,7 @@ def main():
         if len(group) == len(CONDITIONS):
             match_group(group)
         counts[n] += 1
-        print(f"n{n} {counts[n]}/144 | scene {scene} | repeat {repeat} | {mode} | {row['agent_success']:.4f}",
+        print(f"n{n} {counts[n]}/{episodes_per_size} | scene {scene} | repeat {repeat} | {mode} | {row['agent_success']:.4f}",
               flush=True)
 
     for task in tasks:
@@ -236,10 +241,10 @@ def main():
             futures = [pool.submit(trial, *task) for task in pending]
             for future in as_completed(futures):
                 record(future.result())
-    if len(groups) != 96 or any(counts[n] != 144 for n in SIZES):
+    if len(groups) != groups_per_size * len(sizes) or any(counts[n] != episodes_per_size for n in sizes):
         raise RuntimeError(f"Incomplete run: {dict(counts)}")
     summarize(args.output, groups)
-    print("Completed 288 episodes; all 96 three-condition groups verified.", flush=True)
+    print(f"Completed {len(tasks)} episodes; all {len(groups)} three-condition groups verified.", flush=True)
 
 
 if __name__ == "__main__":

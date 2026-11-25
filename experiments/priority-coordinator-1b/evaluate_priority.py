@@ -22,7 +22,7 @@ from gym_art.quadrotor_multi.obstacles.suite_layouts import catalogue
 from priority_brake import BrakeConfig, PriorityBrake
 from sample_factory.model.actor_critic import create_actor_critic
 from sample_factory.model.model_utils import get_rnn_size
-from swarm_rl.dynamic_priority import DynamicPriority, DynamicPriorityConfig
+from swarm_rl.dynamic_priority import DynamicPriority, DynamicPriorityConfig, closest_distance_squared
 from swarm_rl.env_wrappers.quad_utils import make_quadrotor_env_multi
 from swarm_rl.evaluate_layouts import load_checkpoint
 from swarm_rl.layout_metrics import LayoutMetrics
@@ -73,6 +73,66 @@ class LearnedPriority(DynamicPriority):
         return _RANKER.bid(torch.cat((hidden, pooled), dim=-1)).squeeze(-1).numpy()
 
 
+class DistributedLearnedPriority(DynamicPriority):
+    def _priority(self, distance, critic_values):
+        position = self.core.pos.astype(np.float32)
+        velocity = self.core.vel.astype(np.float32)
+        goals = np.asarray([drone.goal for drone in self.core.envs], dtype=np.float32)
+        features = torch.from_numpy(np.concatenate((position / 5, velocity, (goals - position) / 5), axis=-1))
+        hidden = _RANKER.encode(features)
+        own_weights = _RANKER.bid.weight.squeeze(0).chunk(2)[0]
+        # The omitted pooled term is the same scalar for every agent.
+        return (hidden @ own_weights).numpy()
+
+    def goal_offsets(self, critic_values=None):
+        core = self.core
+        neighbors = core.priority_neighbors
+        pos, vel = core.pos, core.vel
+        goals = np.asarray([env.goal for env in core.envs])
+        score = self._priority(np.linalg.norm(pos - goals, axis=1), critic_values)
+
+        if not neighbors.size:
+            return pos - pos
+        relative_pos = pos[neighbors] - pos[:, None, :]
+        relative_vel = vel[neighbors] - vel[:, None, :]
+        horizon = self.config.lookahead
+        conflict = closest_distance_squared(relative_pos, relative_vel, horizon) < self.threshold_squared
+
+        base = score[:, None]
+        other = score[neighbors]
+        base_senior = (other > base) | ((other == base) & (neighbors < self.ids))
+        senior = self._inherited_seniors(score, base_senior, conflict, neighbors, pos, vel, horizon)
+        start = np.any(conflict & senior, axis=1) & (self.remaining == 0)
+        self.anchors[start] = pos[start]
+        self.remaining[start] = self.hold_ticks
+        active = self.remaining > 0
+        self.yield_ticks += int(np.count_nonzero(active))
+        self.remaining[active] -= 1
+        return np.where(active[:, None], goals - self.anchors, 0.)
+
+    def _inherited_seniors(self, score, base_senior, conflict, neighbors, pos, vel, horizon):
+        yielding = np.any(conflict & base_senior, axis=1) | (self.remaining > 0)
+        anchors = np.where(self.remaining[:, None] > 0, self.anchors, pos)
+        blocks_hover = closest_distance_squared(
+            pos[neighbors] - anchors[:, None, :], vel[neighbors], horizon
+        ) < self.threshold_squared
+        sources, slots = np.nonzero(yielding[:, None] & ~base_senior & blocks_hover)
+        receivers = neighbors[sources, slots]
+
+        # Each round sends the current urgency along observed blocking edges.
+        # An acyclic dependency graph has paths of at most N-1 edges.
+        effective = score.copy()
+        for _ in range(len(score) - 1):
+            updated = effective.copy()
+            np.maximum.at(updated, receivers, effective[sources])
+            if np.array_equal(updated, effective):
+                break  # Simulator shortcut. Fixed N-1 rounds give the same result.
+            effective = updated
+        self.inherited_ticks += int(np.count_nonzero(effective > score))
+        own, others = effective[:, None], effective[neighbors]
+        return (others > own) | ((others == own) & base_senior)
+
+
 class FixedPriority(DynamicPriority):
     def _priority(self, distance, critic_values):
         return -self.ids[:, 0]
@@ -121,26 +181,30 @@ def record_json(path, value):
     staged.replace(path)
 
 
-def episode(agents, layout, mode, output, *, flight_state=None, controller_factory=None, brake_factory=None):
+def episode(agents, layout, mode, output, *, seed=SEED, flight_state=None, controller_factory=None, brake_factory=None):
     layout_id = layout["id"]
     result_path = output / "scenes" / f"n{agents}" / layout_id / f"{mode}.json"
     if result_path.is_file():
         return json.loads(result_path.read_text())
     cfg = make_suite_config(_CONFIG, layout_id, agents, DURATION)
-    cfg.layout_seed = SEED
+    cfg.layout_seed = seed
     cfg.quads_static_priority = "off"
     with open(os.devnull, "w") as silent, redirect_stdout(silent), torch.inference_mode():
         env = make_quadrotor_env_multi(cfg)
         try:
             core = env.unwrapped
             core.capture_terminal_state = True
-            random.seed(SEED)
-            np.random.seed(SEED)
-            seed_numba(SEED)
-            torch.manual_seed(SEED)
+            random.seed(seed)
+            np.random.seed(seed)
+            seed_numba(seed)
+            torch.manual_seed(seed)
             for i, drone in enumerate(core.envs):
-                drone._seed(1000 * SEED + i)
-            ranking = {"coordinator": LearnedPriority, "fixed_rank_local": FixedPriority}.get(mode)
+                drone._seed(1000 * seed + i)
+            ranking = {
+                "coordinator": LearnedPriority,
+                "fixed_rank_local": FixedPriority,
+                "distributed_ranker": DistributedLearnedPriority,
+            }.get(mode)
             coordinator = ranking(core, DynamicPriorityConfig()) if ranking else None
             if controller_factory is not None:
                 coordinator = controller_factory(core)
@@ -195,7 +259,7 @@ def episode(agents, layout, mode, output, *, flight_state=None, controller_facto
             result = dict(
                 agents=agents, layout_id=layout_id, family=layout["family"],
                 kind="dead_end" if layout["has_dead_end"] else "corridor",
-                mode=mode, seed=SEED, layout_sha256=hashlib.sha256(walls).hexdigest(),
+                mode=mode, seed=seed, layout_sha256=hashlib.sha256(walls).hexdigest(),
                 **metrics.summary(),
                 swarm_success=int(all(row["success"] for row in metrics.agent_rows())),
                 hold_fraction=holds / (agents * metrics.ticks), wall_seconds=time.perf_counter() - begun,
@@ -213,23 +277,25 @@ def write_csv(path, rows):
         writer.writerows(rows)
 
 
-def summarize(rows, output, layouts, modes):
-    keys = {(n, layout["id"], mode) for n in AGENT_COUNTS for layout in layouts for mode in modes}
+def summarize(rows, output, layouts, modes, agents=AGENT_COUNTS):
+    keys = {(n, layout["id"], mode) for n in agents for layout in layouts for mode in modes}
     index = {(r["agents"], r["layout_id"], r["mode"]): r for r in rows}
     if len(rows) != len(index) or index.keys() != keys:
         raise RuntimeError("The comparison is missing scenes or has duplicate results")
-    for n in AGENT_COUNTS:
+    for n in agents:
         for layout in layouts:
             if len({index[n, layout["id"], mode]["layout_sha256"] for mode in modes}) != 1:
                 raise ValueError(f"Scenario differs across modes for {n} / {layout['id']}")
     metrics = ("success_rate", "collision_rate", "neighbor_collision_rate", "obstacle_collision_rate",
                "timeout_rate", "stalled_rate", "hold_fraction")
     summary = []
-    for n in AGENT_COUNTS:
+    for n in agents:
         for kind in ("corridor", "dead_end", "all"):
             for mode in modes:
                 group = [r for r in rows if r["agents"] == n and r["mode"] == mode
                          and (kind == "all" or r["kind"] == kind)]
+                if not group:
+                    continue
                 summary.append(dict(agents=n, kind=kind, mode=mode, scenes=len(group),
                                     **{key: mean(r[key] for r in group) for key in metrics},
                                     full_swarm_successes=sum(r["swarm_success"] for r in group)))
@@ -246,18 +312,29 @@ def main():
     parser.add_argument("--peer", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=16)
-    parser.add_argument("--modes", nargs="+", choices=(*MODES, "fixed_rank_local", "peer_off", "peer_on"), default=MODES)
+    parser.add_argument("--agents", type=int, nargs="+", choices=AGENT_COUNTS, default=AGENT_COUNTS)
+    parser.add_argument("--seed", type=int, default=SEED)
+    parser.add_argument("--open-only", action="store_true", help="Evaluate the eight layouts with open exits")
+    parser.add_argument(
+        "--modes", nargs="+",
+        choices=(*MODES, "fixed_rank_local", "distributed_ranker", "peer_off", "peer_on"),
+        default=MODES,
+    )
     args = parser.parse_args()
-    if "coordinator" in args.modes and not args.coordinator:
-        parser.error("The coordinator mode requires --coordinator")
+    if {"coordinator", "distributed_ranker"}.intersection(args.modes) and not args.coordinator:
+        parser.error("Coordinator and distributed ranker modes require --coordinator")
+    if len(args.agents) != len(set(args.agents)):
+        parser.error("--agents values must be unique")
     peer_modes = {"peer_off", "peer_on"}.intersection(args.modes)
     if peer_modes and not args.peer:
         parser.error("Peer modes require --peer")
     layouts = [layout for layout in catalogue() if layout["paired_with"] is not None]
     if len(layouts) != 16:
         raise RuntimeError("Expected eight paired corridor/dead-end layouts")
+    if args.open_only:
+        layouts = [layout for layout in layouts if not layout["has_dead_end"]]
     manifest = dict(
-        agents=list(AGENT_COUNTS), modes=list(args.modes), seed=SEED, duration=DURATION,
+        agents=list(args.agents), modes=list(args.modes), seed=args.seed, duration=DURATION,
         layouts=[layout["id"] for layout in layouts], static_brake=vars(BrakeConfig()),
         files={file.name: hashlib.sha256(file.read_bytes()).hexdigest()
                for file in (args.config, args.flight, args.coordinator, args.peer, Path(__file__),
@@ -271,19 +348,20 @@ def main():
     if manifest_path.is_file() and json.loads(manifest_path.read_text()) != manifest:
         raise ValueError("Refusing to merge results from different configurations")
     record_json(manifest_path, manifest)
-    tasks = [(n, layout, mode, args.output) for n in reversed(AGENT_COUNTS) for layout in layouts for mode in args.modes]
+    tasks = [(n, layout, mode, args.output)
+             for n in reversed(args.agents) for layout in layouts for mode in args.modes]
     rows = []
     with ProcessPoolExecutor(
         max_workers=args.workers, mp_context=mp.get_context("spawn"),
         initializer=initialize, initargs=(args.config, args.flight, args.coordinator, args.peer)
     ) as pool:
-        futures = [pool.submit(episode, *task) for task in tasks]
+        futures = [pool.submit(episode, *task, seed=args.seed) for task in tasks]
         for future in as_completed(futures):
             row = future.result()
             rows.append(row)
             print(f"{len(rows)}/{len(tasks)} N={row['agents']} {row['layout_id']} {row['mode']} "
                   f"success={row['success_rate']:.3f} wall={row['wall_seconds']:.1f}s", flush=True)
-    summarize(rows, args.output, layouts, args.modes)
+    summarize(rows, args.output, layouts, args.modes, args.agents)
     print(f"{len(tasks)} episodes complete.", flush=True)
 
 

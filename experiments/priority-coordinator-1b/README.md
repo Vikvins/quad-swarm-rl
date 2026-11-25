@@ -53,3 +53,5 @@ PYTHONPATH="$QUADSWARM_SIM" PYGLET_HEADLESS=true MPLBACKEND=Agg \
 ```
 
 Для контрольного варианта добавь `--modes fixed_rank_local` и укажи отдельный каталог `--output /tmp/quad-priority-fixed-local`.
+
+Отдельный эксперимент с режимом `distributed_ranker` описан в [отчёте о децентрализованном приоритете](DISTRIBUTED_PRIORITY.md).

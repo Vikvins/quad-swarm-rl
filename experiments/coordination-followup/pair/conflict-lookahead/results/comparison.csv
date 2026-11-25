@@ -1,0 +1,3 @@
+mode,episodes,attempts,safe_arrivals,contacts,early_contacts,timeouts,hold_fraction
+intent_pair_ranked,8,800,240,557,280,268,0.13605013324450366
+pair_conflict_lookahead,8,800,315,476,240,229,0.09908311125916056

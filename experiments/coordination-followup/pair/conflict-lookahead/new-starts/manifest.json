@@ -1,0 +1,32 @@
+{
+  "agents": 100,
+  "duration": 15.0,
+  "seeds": [
+    50001,
+    50002
+  ],
+  "modes": [
+    "intent_pair_ranked",
+    "pair_conflict_lookahead",
+    "gated_peer"
+  ],
+  "layouts": [
+    "straight_open",
+    "narrow_open",
+    "elbow_open",
+    "zigzag_open",
+    "funnel_open",
+    "wide_u_open",
+    "fork_open",
+    "comb_open"
+  ],
+  "files": {
+    "baseline.json": "8c21f01ad541112fb109daf0bf13a471656cf2118b1f6a74f32068c439600d0a",
+    "baseline.pth": "f429fa60b70a82ba1aaf54ebbdd0f966d65995d46caf87e0fd8628e1f15b2524",
+    "coordinator_100m.pt": "6a4b19066396b6feefdb53934176d1a792c01a41a33311c0ab42807ce0184741",
+    "weighted_100m.pt": "ece4978ad8d896a3afba102b2a30509f25306f777b34027ebd0492d111b2badf",
+    "validate_new_starts.py": "6a7701ea0b6a162a51055cf0ea4905b7849e77406d9f73500d03d1f757cb4020",
+    "evaluate_conflict_lookahead.py": "3c2b28b308035c6d575bb19f02de64d27520b185cf53ecbb4c4284b54b2e957f",
+    "evaluate_gated_priority.py": "f82e5cbfd5a65c8f54ef2799b08a359c2a8bcabc9d7cffb064c636f7d317f96d"
+  }
+}

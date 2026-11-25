@@ -1,0 +1,37 @@
+{
+  "agents": 100,
+  "seed": 50000,
+  "duration": 15.0,
+  "layouts": [
+    "comb_open",
+    "elbow_open",
+    "fork_open",
+    "funnel_open",
+    "narrow_open",
+    "straight_open",
+    "wide_u_open",
+    "zigzag_open"
+  ],
+  "modes": [
+    "intent_pair_ranked",
+    "pair_conflict_lookahead"
+  ],
+  "brake": {
+    "horizon": 0.65,
+    "distance_scale": 1.8,
+    "stopping_time": 0.25,
+    "hold": 0.2,
+    "max_wait": 2.0,
+    "release": 0.5
+  },
+  "files": {
+    "baseline.json": "8c21f01ad541112fb109daf0bf13a471656cf2118b1f6a74f32068c439600d0a",
+    "baseline.pth": "f429fa60b70a82ba1aaf54ebbdd0f966d65995d46caf87e0fd8628e1f15b2524",
+    "coordinator_100m.pt": "6a4b19066396b6feefdb53934176d1a792c01a41a33311c0ab42807ce0184741",
+    "evaluate_conflict_lookahead.py": "3c2b28b308035c6d575bb19f02de64d27520b185cf53ecbb4c4284b54b2e957f",
+    "evaluate_coordinator_next.py": "d28cb0f4c87fb12c78cf879c223822567a0c0e28822a9c120996ce667ea8ad16",
+    "evaluate_rank_order.py": "142a41f1fcc3a5661c38995c02bcd7e409f81e48e4f599d5798011df95219192",
+    "priority_brake.py": "022b1b5cde9279b93bdae4d914280a97449a3b680e1392becf6cd3d70d6a9faa"
+  },
+  "reference_sha256": "a16d360ee0b30953d08dd80d917a03ba462f67790b3dbc10a2e30b302f5460cc"
+}

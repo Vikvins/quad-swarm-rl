@@ -1,0 +1,48 @@
+{
+  "agents": [
+    200,
+    300
+  ],
+  "seeds": [
+    50000
+  ],
+  "modes": [
+    "baseline",
+    "static_brake",
+    "pair_fixed_id",
+    "pair_learned"
+  ],
+  "duration": 15.0,
+  "layouts": [
+    "straight_open",
+    "straight_deadend",
+    "narrow_open",
+    "narrow_deadend",
+    "elbow_open",
+    "elbow_deadend",
+    "zigzag_open",
+    "zigzag_deadend",
+    "funnel_open",
+    "funnel_deadend",
+    "wide_u_open",
+    "wide_u_deadend",
+    "fork_open",
+    "fork_deadend",
+    "comb_open",
+    "comb_deadend"
+  ],
+  "simulator_revision": "7f4596ee06d9d55dcb98ed985ab4a4fcc025fc20",
+  "spawn_capacity_source": "scaling-725m-20261123",
+  "learned_priorities": "mean",
+  "files": {
+    "baseline.json": "8c21f01ad541112fb109daf0bf13a471656cf2118b1f6a74f32068c439600d0a",
+    "baseline.pth": "f429fa60b70a82ba1aaf54ebbdd0f966d65995d46caf87e0fd8628e1f15b2524",
+    "coordinator_100m.pt": "6a4b19066396b6feefdb53934176d1a792c01a41a33311c0ab42807ce0184741",
+    "evaluate_pair_scaling.py": "c53ce622fa1e89876d49ddaee5281caaa38209bbe31609511a09be19819f31cc",
+    "evaluate_pair_checkpoint.py": "aa3b0fb888a8f8ac9a8ac811455909d8a8f5df26602936a1d185b63e357a115e",
+    "evaluate_priority.py": "6dc354b217e3c8d14077d330defc8f8f2ca756affe9cd1e70cea89e5b0046202",
+    "suite_layouts.py": "20448eb25b46a86d606642a94757f6564a53ff4feb8dcf4d13b76b5d55e35748",
+    "pair_priority.py": "02dd0d8ae0cd3410c4341b8e7018484a2258de39ca05ad80c383c18d43e12a07",
+    "priority_brake.py": "1b5e1d71d4564724279e5cca86a8345e4bef685499ab433909e1a656252e07a1"
+  }
+}

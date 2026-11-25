@@ -1,0 +1,109 @@
+{
+  "agents": 8,
+  "layout_id": "narrow_deadend",
+  "family": "narrow",
+  "kind": "dead_end",
+  "mode": "peer_on",
+  "seed": 50000,
+  "layout_sha256": "1c18d5a37a57d854483b26bcdb92817c9200458a95d23492617ccee67fbd68fc",
+  "success_rate": 0.0,
+  "reached_goal_rate": 0.0,
+  "collision_rate": 0.125,
+  "obstacle_collision_rate": 0.125,
+  "neighbor_collision_rate": 0.0,
+  "room_collision_rate": 0.0,
+  "crossed_portal_rate": 0.0,
+  "timeout_rate": 1.0,
+  "stalled_rate": 0.5,
+  "mean_arrival_time": null,
+  "mean_portal_time": null,
+  "mean_path_length": 6.562561279202642,
+  "mean_final_distance": 3.9835837750611276,
+  "duration": 15.01,
+  "nearest_start": [
+    0.58866469101327,
+    0.6000000000000001,
+    0.5886646910132705,
+    0.5886646910132705,
+    1.2000000000000002,
+    0.6000000000000001,
+    1.1999999999999997,
+    0.58866469101327
+  ],
+  "start_span_xyz": [
+    0.4080761184457488,
+    1.8000000000000003,
+    2.6999999999999997
+  ],
+  "start_clearance": [
+    0.24776797041735682,
+    0.24697856620347974,
+    0.25715358725130905,
+    0.2777139890352341,
+    0.2594753903226055,
+    0.2594753903226055,
+    0.24641400781516548,
+    0.2777139890352341
+  ],
+  "collision_threshold": 0.09192388155425119,
+  "dt": 0.01,
+  "first_contact_ticks": {
+    "neighbor": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+    ],
+    "obstacle": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      388,
+      -1
+    ],
+    "room": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+    ]
+  },
+  "first_hold_ticks": [
+    0,
+    0,
+    39,
+    0,
+    0,
+    24,
+    516,
+    58
+  ],
+  "signal_ticks": 1501,
+  "signal": [
+    12008.0,
+    6191.0,
+    6132.0,
+    243.0,
+    232.0,
+    138.0,
+    27346.630027770996,
+    8091.060094594955,
+    6610.0,
+    5027.683138370514,
+    4739.474576830864
+  ],
+  "swarm_success": 0,
+  "hold_fraction": 0.5935209860093271,
+  "wall_seconds": 41.55206934499438
+}

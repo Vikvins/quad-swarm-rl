@@ -1,0 +1,7 @@
+kind,pair_limit,episodes,attempts,safe_arrivals,collisions,timeouts,full_candidate_ticks,overflow_ticks,early_overflow_ticks,pair_observation_ticks,omitted_dangerous_pairs,maximum_omitted_pairs,average_active_pairs
+corridor,64,8,800,190,604,291,2,0,0,12008,0,0,14.796302465023318
+corridor,128,8,800,163,628,292,0,0,0,12008,0,0,16.141155896069286
+corridor,256,8,800,171,623,306,0,0,0,12008,0,0,16.288974017321785
+dead_end,64,8,800,0,766,779,1257,1164,0,12008,32061,96,31.413391072618253
+dead_end,128,8,800,0,760,782,1,0,0,12008,0,0,35.848684210526315
+dead_end,256,8,800,0,766,785,0,0,0,12008,0,0,35.20961025982678

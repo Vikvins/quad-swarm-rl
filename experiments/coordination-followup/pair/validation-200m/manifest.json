@@ -1,0 +1,34 @@
+{
+  "agents": 100,
+  "seed": 50000,
+  "duration": 15.0,
+  "coordinator_steps": 200000000,
+  "layouts": [
+    "straight_open",
+    "straight_deadend",
+    "narrow_open",
+    "narrow_deadend",
+    "elbow_open",
+    "elbow_deadend",
+    "zigzag_open",
+    "zigzag_deadend",
+    "funnel_open",
+    "funnel_deadend",
+    "wide_u_open",
+    "wide_u_deadend",
+    "fork_open",
+    "fork_deadend",
+    "comb_open",
+    "comb_deadend"
+  ],
+  "files": {
+    "baseline.json": "8c21f01ad541112fb109daf0bf13a471656cf2118b1f6a74f32068c439600d0a",
+    "baseline.pth": "f429fa60b70a82ba1aaf54ebbdd0f966d65995d46caf87e0fd8628e1f15b2524",
+    "checkpoint_000200000000.pt": "690faf78d315f93d36ce76e77c7239e9209ebe0fb383cf8fdc18bc357abca07f",
+    "pair-100m-reference.csv": "cac9b518aa6b54a830a65c89ca34721ac4e939d3442ebd3be35bbe75537735ac",
+    "validate_pair_200m.py": "5c53d19bad07273dad4cc03b150926057a22d95b50aa2d9ea573f5d4020a8a4e",
+    "evaluate_pair_checkpoint.py": "aa3b0fb888a8f8ac9a8ac811455909d8a8f5df26602936a1d185b63e357a115e",
+    "evaluate_priority.py": "6dc354b217e3c8d14077d330defc8f8f2ca756affe9cd1e70cea89e5b0046202",
+    "pair_priority.py": "02dd0d8ae0cd3410c4341b8e7018484a2258de39ca05ad80c383c18d43e12a07"
+  }
+}

@@ -1,0 +1,122 @@
+[
+  {
+    "layout_id": "comb_deadend",
+    "metric": "collision_rate",
+    "reference": 0.99,
+    "current": 0.98
+  },
+  {
+    "layout_id": "comb_deadend",
+    "metric": "hold_fraction",
+    "reference": 0.29938041305796137,
+    "current": 0.29603597601598935
+  },
+  {
+    "layout_id": "elbow_deadend",
+    "metric": "hold_fraction",
+    "reference": 0.1882678214523651,
+    "current": 0.18246502331778813
+  },
+  {
+    "layout_id": "elbow_open",
+    "metric": "collision_rate",
+    "reference": 0.87,
+    "current": 0.91
+  },
+  {
+    "layout_id": "elbow_open",
+    "metric": "hold_fraction",
+    "reference": 0.1873151232511659,
+    "current": 0.18890073284477016
+  },
+  {
+    "layout_id": "fork_deadend",
+    "metric": "collision_rate",
+    "reference": 0.97,
+    "current": 0.96
+  },
+  {
+    "layout_id": "fork_deadend",
+    "metric": "hold_fraction",
+    "reference": 0.202018654230513,
+    "current": 0.20424383744170552
+  },
+  {
+    "layout_id": "funnel_deadend",
+    "metric": "collision_rate",
+    "reference": 0.99,
+    "current": 0.97
+  },
+  {
+    "layout_id": "funnel_deadend",
+    "metric": "timeout_rate",
+    "reference": 0.99,
+    "current": 0.98
+  },
+  {
+    "layout_id": "funnel_deadend",
+    "metric": "hold_fraction",
+    "reference": 0.35658227848101265,
+    "current": 0.3612391738840773
+  },
+  {
+    "layout_id": "funnel_open",
+    "metric": "hold_fraction",
+    "reference": 0.127728181212525,
+    "current": 0.12784810126582277
+  },
+  {
+    "layout_id": "narrow_deadend",
+    "metric": "collision_rate",
+    "reference": 0.99,
+    "current": 1.0
+  },
+  {
+    "layout_id": "narrow_deadend",
+    "metric": "hold_fraction",
+    "reference": 0.33572951365756165,
+    "current": 0.32473017988007996
+  },
+  {
+    "layout_id": "narrow_open",
+    "metric": "success_rate",
+    "reference": 0.18,
+    "current": 0.17
+  },
+  {
+    "layout_id": "narrow_open",
+    "metric": "collision_rate",
+    "reference": 0.82,
+    "current": 0.83
+  },
+  {
+    "layout_id": "narrow_open",
+    "metric": "timeout_rate",
+    "reference": 0.26,
+    "current": 0.3
+  },
+  {
+    "layout_id": "narrow_open",
+    "metric": "hold_fraction",
+    "reference": 0.1668487674883411,
+    "current": 0.17277814790139906
+  },
+  {
+    "layout_id": "straight_deadend",
+    "metric": "hold_fraction",
+    "reference": 0.3217721518987342,
+    "current": 0.3235043304463691
+  },
+  {
+    "layout_id": "zigzag_deadend",
+    "metric": "hold_fraction",
+    "reference": 0.32635576282478346,
+    "current": 0.3196469020652898
+  },
+  {
+    "layout_id": "zigzag_open",
+    "metric": "hold_fraction",
+    "reference": 0.32635576282478346,
+    "current": 0.3196469020652898
+  }
+]

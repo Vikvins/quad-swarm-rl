@@ -20,7 +20,7 @@ class TracedPeer(PeerPriority):
         hidden = self.policy.encode(features)
         raw = self.policy.bid(hidden)[:, 0]
         neighbors = torch.as_tensor(core.neighborhood_indices(), dtype=torch.long)
-        signals = torch.cat((raw[:, None], raw[neighbors]), dim=-1).tanh()
+        signals = torch.cat((raw[:, None], raw[neighbors]), dim=-1).tanh() * self.policy.message_gain
         n = len(raw)
         flag = features.new_ones(n, 1)
         zeros = torch.zeros_like(signals)
@@ -95,19 +95,21 @@ def run(n, layout, mode, output):
 
 
 if __name__ == "__main__":
+    repo = Path(__file__).resolve().parents[1]
+    base = repo / "swarm100-1b"
     parser = argparse.ArgumentParser()
     parser.add_argument("--workers", type=int, default=16)
     parser.add_argument("--agents", type=int, nargs="+", default=[100])
     parser.add_argument("--modes", nargs="+", default=["baseline", "peer_on", "peer_off", "static_brake"])
+    parser.add_argument("--config", type=Path, default=base / "config.json")
+    parser.add_argument("--flight", type=Path,
+                        default=base / "checkpoints/checkpoint_000781254_1000005120.pth")
+    parser.add_argument("--peer", type=Path, default=repo / "priority-channel-1b/priority.pt")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    repo = Path(__file__).resolve().parents[1]
-    base = repo / "swarm100-1b"
     layouts = [layout for layout in evaluate.catalogue() if layout["paired_with"]]
     with ProcessPoolExecutor(max_workers=args.workers, mp_context=mp.get_context("spawn"),
-            initializer=init, initargs=(base / "config.json",
-                base / "checkpoints/checkpoint_000781254_1000005120.pth",
-                repo / "priority-channel-1b/priority.pt")) as pool:
+            initializer=init, initargs=(args.config, args.flight, args.peer)) as pool:
         tasks = [pool.submit(run, n, layout, mode, args.output)
                  for n in args.agents for layout in layouts for mode in args.modes]
         for i, f in enumerate(as_completed(tasks), 1):

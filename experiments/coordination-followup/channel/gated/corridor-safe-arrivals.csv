@@ -1,0 +1,9 @@
+layout_id,agents,seed,static_brake,ranked_brake,gated_peer
+comb_open,100,50000,19,36,35
+elbow_open,100,50000,0,4,6
+fork_open,100,50000,22,15,25
+funnel_open,100,50000,23,37,49
+narrow_open,100,50000,19,29,29
+straight_open,100,50000,33,35,46
+wide_u_open,100,50000,70,86,68
+zigzag_open,100,50000,0,0,0

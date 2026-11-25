@@ -62,12 +62,12 @@ def predicts_conflict(nominal, accepted, i, j, threshold_squared):
 
 
 @njit(cache=True)
-def resolve_braking(nominal, stopped, order, held, threshold_squared):
+def resolve_braking(nominal, stopped, order, held, threshold_squared, eligible=None):
     """Process juniors against the accepted trajectories of all senior drones."""
     accepted = nominal.copy()
     brakes = held.copy()
     for rank, drone in enumerate(order):
-        if not brakes[drone]:
+        if not brakes[drone] and (eligible is None or eligible[drone]):
             for senior in order[:rank]:
                 if predicts_conflict(nominal, accepted, drone, senior, threshold_squared):
                     brakes[drone] = True
@@ -100,11 +100,11 @@ class PriorityBrake:
         self.promotions = 0
         self.brake_ticks = 0
 
-    def decide(self):
-        pos, vel = self.core.pos, self.core.vel
-        nominal = pos[:, None, :] + vel[:, None, :] * self.nominal_times
-        stopped = pos[:, None, :] + vel[:, None, :] * self.brake_times
-        order = self.ids
+    def priority_order(self):
+        return self.ids
+
+    def order_with_promotion(self):
+        order = self.priority_order()
         if self.promotion_left == 0:
             self.promoted = -1
             candidate = int(np.argmax(self.waited))
@@ -113,10 +113,17 @@ class PriorityBrake:
                 self.promotion_left = self.release_ticks
                 self.promotions += 1
         if self.promoted >= 0:
-            order = np.r_[self.promoted, self.ids[self.ids != self.promoted]]
+            order = np.r_[self.promoted, order[order != self.promoted]]
             self.remaining[self.promoted] = 0
             self.promotion_left -= 1
 
+        return order
+
+    def decide(self):
+        pos, vel = self.core.pos, self.core.vel
+        nominal = pos[:, None, :] + vel[:, None, :] * self.nominal_times
+        stopped = pos[:, None, :] + vel[:, None, :] * self.brake_times
+        order = self.order_with_promotion()
         held = self.remaining > 0
         braking = resolve_braking(nominal, stopped, order, held, self.threshold_squared)
         new_hold = braking & ~held

@@ -25,6 +25,8 @@
 
 [Эпизоды основного сравнения](results/frozen-flight/episodes.csv) · [Сводка](results/frozen-flight/summary.csv) · [Параметры](results/frozen-flight/manifest.json) · [Сравнение на лётных весах 100 млн](results/matched-100m/summary.csv).
 
+[Продолжение до 200 млн, результаты с разным горизонтом и лимитом пар, тесты на 200 и 300 дронах](../coordination-followup/README.md).
+
 ### Запуск
 
 Из корня ветки `swarm100` с [симулятором `7f4596e`](https://github.com/Vikvins/quad-swarm-rl/tree/7f4596ee06d9d55dcb98ed985ab4a4fcc025fc20) по пути `QUADSWARM_SIM`.

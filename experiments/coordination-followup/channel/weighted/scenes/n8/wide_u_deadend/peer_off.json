@@ -1,0 +1,109 @@
+{
+  "agents": 8,
+  "layout_id": "wide_u_deadend",
+  "family": "wide_u",
+  "kind": "dead_end",
+  "mode": "peer_off",
+  "seed": 50000,
+  "layout_sha256": "b66e7b0241119fd4b260130aeb38cc75bb3f9d9b1d7ff187acf5311a62bacfcb",
+  "success_rate": 0.0,
+  "reached_goal_rate": 0.0,
+  "collision_rate": 0.125,
+  "obstacle_collision_rate": 0.125,
+  "neighbor_collision_rate": 0.0,
+  "room_collision_rate": 0.0,
+  "crossed_portal_rate": 0.0,
+  "timeout_rate": 1.0,
+  "stalled_rate": 0.375,
+  "mean_arrival_time": null,
+  "mean_portal_time": null,
+  "mean_path_length": 3.933248220722272,
+  "mean_final_distance": 2.764373324246909,
+  "duration": 15.01,
+  "nearest_start": [
+    0.6724260944583084,
+    0.42489906228081226,
+    0.42489906228081226,
+    0.42426406871192873,
+    0.42426406871192873,
+    0.6712221786615169,
+    0.6712221786615169,
+    0.9952583650123787
+  ],
+  "start_span_xyz": [
+    0.9026920394819162,
+    1.5,
+    3.0
+  ],
+  "start_clearance": [
+    0.5541172820211449,
+    1.301149565582888,
+    1.0126764194943234,
+    0.7164248040541106,
+    1.0126764194943234,
+    1.1582099068067164,
+    1.457471940809332,
+    1.001414588579009
+  ],
+  "collision_threshold": 0.09192388155425119,
+  "dt": 0.01,
+  "first_contact_ticks": {
+    "neighbor": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+    ],
+    "obstacle": [
+      -1,
+      -1,
+      65,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+    ],
+    "room": [
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1,
+      -1
+    ]
+  },
+  "first_hold_ticks": [
+    138,
+    0,
+    39,
+    30,
+    15,
+    1,
+    34,
+    0
+  ],
+  "signal_ticks": 1501,
+  "signal": [
+    12008.0,
+    7472.0,
+    7021.0,
+    479.0,
+    325.0,
+    65.0,
+    33242.571860313416,
+    11241.351820468903,
+    1721.0,
+    3103.417478322983,
+    2992.3691908717155
+  ],
+  "swarm_success": 0,
+  "hold_fraction": 0.6332445036642238,
+  "wall_seconds": 44.037602291005896
+}

@@ -1,0 +1,17 @@
+{
+  "agents": 100,
+  "seed": 50000,
+  "duration": 15.0,
+  "modes": [
+    "messages_real",
+    "messages_zero"
+  ],
+  "files": {
+    "checkpoint_000200000000.pt": "f493c1f5886eac6b79675b6949c804c8c4df40638b157c2ba9d5040f93f44a33",
+    "baseline.json": "8c21f01ad541112fb109daf0bf13a471656cf2118b1f6a74f32068c439600d0a",
+    "baseline.pth": "f429fa60b70a82ba1aaf54ebbdd0f966d65995d46caf87e0fd8628e1f15b2524",
+    "validation-reference.csv": "65d756d569843b904fe51aae5ad816dd5c2a88b2884a5f8126ac41c4be175194",
+    "validate_goal_channel.py": "13efc1baa261578ab424fd96bca7c9e633a7f1f9e2e9490b044938d3c7e882a0",
+    "evaluate_messages.py": "923eabdc50dbaa1b6c82fe2b835592b545ae812284b11e2ab93d1bb87ecb202b"
+  }
+}

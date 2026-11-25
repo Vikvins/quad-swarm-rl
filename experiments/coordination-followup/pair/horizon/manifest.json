@@ -1,0 +1,38 @@
+{
+  "agents": 100,
+  "seed": 50000,
+  "duration": 15.0,
+  "pair_limit": 64,
+  "horizons": {
+    "h025": 0.25,
+    "h050": 0.5,
+    "h065": 0.65
+  },
+  "layouts": [
+    "straight_open",
+    "straight_deadend",
+    "narrow_open",
+    "narrow_deadend",
+    "elbow_open",
+    "elbow_deadend",
+    "zigzag_open",
+    "zigzag_deadend",
+    "funnel_open",
+    "funnel_deadend",
+    "wide_u_open",
+    "wide_u_deadend",
+    "fork_open",
+    "fork_deadend",
+    "comb_open",
+    "comb_deadend"
+  ],
+  "files": {
+    "baseline.json": "8c21f01ad541112fb109daf0bf13a471656cf2118b1f6a74f32068c439600d0a",
+    "baseline.pth": "f429fa60b70a82ba1aaf54ebbdd0f966d65995d46caf87e0fd8628e1f15b2524",
+    "coordinator_100m.pt": "6a4b19066396b6feefdb53934176d1a792c01a41a33311c0ab42807ce0184741",
+    "validate_pair_horizon.py": "730c1da5217e3aacb2ea306a82973ea6a3b4cae0adeb64841d24af912cffa8d0",
+    "validate_pair_capacity.py": "a3df4c82a42462c394b58d38851682bd339e66e4e652efcdd9fa2adf79b80fcb",
+    "evaluate_priority.py": "6dc354b217e3c8d14077d330defc8f8f2ca756affe9cd1e70cea89e5b0046202",
+    "manifest.json": "e6a96e4f551829073cc6064899a406fcd51cff496b365ecb241767892ddff26c"
+  }
+}

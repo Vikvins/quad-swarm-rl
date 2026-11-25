@@ -121,7 +121,7 @@ def record_json(path, value):
     staged.replace(path)
 
 
-def episode(agents, layout, mode, output, *, flight_state=None, controller_factory=None):
+def episode(agents, layout, mode, output, *, flight_state=None, controller_factory=None, brake_factory=None):
     layout_id = layout["id"]
     result_path = output / "scenes" / f"n{agents}" / layout_id / f"{mode}.json"
     if result_path.is_file():
@@ -145,6 +145,8 @@ def episode(agents, layout, mode, output, *, flight_state=None, controller_facto
             if controller_factory is not None:
                 coordinator = controller_factory(core)
             brake = PriorityBrake(core, BrakeConfig()) if mode == "static_brake" else None
+            if brake_factory is not None:
+                brake = brake_factory(core)
             if mode == "peer_on":
                 core.track_priority_neighbors = True
             obs, _ = env.reset()

@@ -1,0 +1,1072 @@
+[
+  {
+    "seed": 50001,
+    "group": "working_sensor",
+    "safe": [
+      180,
+      175
+    ],
+    "failure_causes": [
+      {
+        "neighbor": 41,
+        "timeout": 1,
+        "obstacle": 8
+      },
+      {
+        "neighbor": 47,
+        "timeout": 1,
+        "obstacle": 10
+      }
+    ],
+    "improved": [],
+    "worsened": [
+      {
+        "drone": 166,
+        "reached": true,
+        "first_goal_time_s": 3.81,
+        "min_goal_distance_m": 0.05555752867080029,
+        "end_goal_distance_m": 0.06735634905398191,
+        "physical_first_contacts": {
+          "neighbor": [
+            7.17,
+            201
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 7.17,
+            "position_m": [
+              0.47405266060951184,
+              -0.5225240915570002,
+              1.2853312939386228
+            ],
+            "own_goal_distance_m": 0.07337641723119029,
+            "heading_before_m_s": [
+              -0.031911034891700815,
+              -0.0032217055001311206,
+              0.017491288320229715
+            ],
+            "peers": [
+              {
+                "drone": 201,
+                "distance_100ms_before_m": 0.2922689998501189,
+                "closing_speed_100ms_before_m_s": 2.1016771328351553,
+                "velocity_cosine_100ms_before": -0.7444408321727112,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 3.7272232266808203,
+                "other_reached_before_event": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "drone": 201,
+        "reached": true,
+        "first_goal_time_s": 11.25,
+        "min_goal_distance_m": 0.07710987405701342,
+        "end_goal_distance_m": 0.07710987405701342,
+        "physical_first_contacts": {
+          "neighbor": [
+            7.17,
+            166
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 7.17,
+            "position_m": [
+              0.409797241931435,
+              -0.5776516848464099,
+              1.2766359184784708
+            ],
+            "own_goal_distance_m": 3.7272232266808203,
+            "heading_before_m_s": [
+              1.7394244614317194,
+              1.126512571830399,
+              0.15023072489921038
+            ],
+            "peers": [
+              {
+                "drone": 166,
+                "distance_100ms_before_m": 0.2922689998501189,
+                "closing_speed_100ms_before_m_s": 2.1016771328351553,
+                "velocity_cosine_100ms_before": -0.7444408321727112,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 0.07337641723119029,
+                "other_reached_before_event": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "drone": 239,
+        "reached": true,
+        "first_goal_time_s": 6.82,
+        "min_goal_distance_m": 0.05680909072601578,
+        "end_goal_distance_m": 0.17785770015093386,
+        "physical_first_contacts": {
+          "neighbor": [
+            1.04,
+            275
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 10.95,
+            "position_m": [
+              -3.46230720621222,
+              4.465650193958108,
+              2.137554520641621
+            ],
+            "own_goal_distance_m": 0.08052775001897543,
+            "heading_before_m_s": [
+              0.02670255672273067,
+              0.013409054863765639,
+              0.004721258144857045
+            ],
+            "peers": [
+              {
+                "drone": 88,
+                "distance_100ms_before_m": 0.23410106532331676,
+                "closing_speed_100ms_before_m_s": 1.5686726898228107,
+                "velocity_cosine_100ms_before": 0.27579857934869834,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 1.1138737406272725,
+                "other_reached_before_event": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "drone": 270,
+        "reached": true,
+        "first_goal_time_s": 7.88,
+        "min_goal_distance_m": 0.0562249056941691,
+        "end_goal_distance_m": 0.07440824592446513,
+        "physical_first_contacts": {
+          "neighbor": [
+            5.94,
+            10
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 5.94,
+            "position_m": [
+              3.0318696731708754,
+              0.8161403052050719,
+              1.349858059116934
+            ],
+            "own_goal_distance_m": 3.370146651956526,
+            "heading_before_m_s": [
+              -0.5244784438684651,
+              -0.6887086598864869,
+              0.051036526065160175
+            ],
+            "peers": [
+              {
+                "drone": 10,
+                "distance_100ms_before_m": 0.35070081033020284,
+                "closing_speed_100ms_before_m_s": 2.976134318595699,
+                "velocity_cosine_100ms_before": -0.8548051580807795,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 2.248245521499124,
+                "other_reached_before_event": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "drone": 297,
+        "reached": true,
+        "first_goal_time_s": 4.23,
+        "min_goal_distance_m": 0.03230274545974986,
+        "end_goal_distance_m": 0.0686597982255516,
+        "physical_first_contacts": {
+          "neighbor": [
+            8.19,
+            269
+          ],
+          "obstacle": [
+            8.76,
+            19
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 8.19,
+            "position_m": [
+              -3.43947153417315,
+              4.492562733731971,
+              2.930748453367172
+            ],
+            "own_goal_distance_m": 0.072488807755444,
+            "heading_before_m_s": [
+              -0.13458500042042443,
+              0.05066451035867788,
+              0.01049330501986821
+            ],
+            "peers": [
+              {
+                "drone": 269,
+                "distance_100ms_before_m": 0.2191474735827808,
+                "closing_speed_100ms_before_m_s": 1.4573084425472833,
+                "velocity_cosine_100ms_before": 0.38043101388484024,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 1.0844762597717357,
+                "other_reached_before_event": false
+              }
+            ]
+          },
+          {
+            "kind": "obstacle",
+            "time_s": 8.76,
+            "position_m": [
+              -4.170959980133114,
+              4.484037081668609,
+              2.403380310657864
+            ],
+            "own_goal_distance_m": 0.8299174419921875,
+            "heading_before_m_s": [
+              -2.2914806923706967,
+              -0.19605765086078394,
+              -1.7857866363586998
+            ],
+            "obstacle_index": 19,
+            "obstacle_center_m": [
+              -4.5,
+              4.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.5757607250071133
+          }
+        ]
+      }
+    ],
+    "initial_state_matches": true,
+    "freeze_start_s": 4.46
+  },
+  {
+    "seed": 50001,
+    "group": "selected",
+    "safe": [
+      65,
+      59
+    ],
+    "failure_causes": [
+      {
+        "neighbor": 8,
+        "obstacle": 2
+      },
+      {
+        "neighbor": 11,
+        "obstacle": 6
+      }
+    ],
+    "improved": [],
+    "worsened": [
+      {
+        "drone": 34,
+        "reached": true,
+        "first_goal_time_s": 6.84,
+        "min_goal_distance_m": 0.07017749357203125,
+        "end_goal_distance_m": 0.0823071003020239,
+        "physical_first_contacts": {
+          "obstacle": [
+            5.51,
+            7
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "obstacle",
+            "time_s": 5.51,
+            "position_m": [
+              4.270467693315607,
+              -1.2424425961347365,
+              1.3901585408932362
+            ],
+            "own_goal_distance_m": 1.450392846527928,
+            "heading_before_m_s": [
+              1.0991525166334797,
+              0.6059329554389333,
+              -0.17102055025196483
+            ],
+            "obstacle_index": 7,
+            "obstacle_center_m": [
+              4.5,
+              -1.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.3908262204086118
+          }
+        ]
+      },
+      {
+        "drone": 51,
+        "reached": true,
+        "first_goal_time_s": 8.42,
+        "min_goal_distance_m": 0.07507399259734542,
+        "end_goal_distance_m": 0.522167744677286,
+        "physical_first_contacts": {
+          "neighbor": [
+            11.83,
+            88
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 11.83,
+            "position_m": [
+              -5.47502102546075,
+              2.45917243592237,
+              1.1415579313569326
+            ],
+            "own_goal_distance_m": 0.08052268656669491,
+            "heading_before_m_s": [
+              0.10801182779309833,
+              -0.016337488901083563,
+              -0.002873185703669938
+            ],
+            "peers": [
+              {
+                "drone": 88,
+                "distance_100ms_before_m": 0.6106066342353541,
+                "closing_speed_100ms_before_m_s": 5.581858079191073,
+                "velocity_cosine_100ms_before": -0.5221624829273852,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 3.670301545673636,
+                "other_reached_before_event": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "drone": 62,
+        "reached": true,
+        "first_goal_time_s": 5.38,
+        "min_goal_distance_m": 0.04142663525891437,
+        "end_goal_distance_m": 0.0777989763670607,
+        "physical_first_contacts": {
+          "neighbor": [
+            6.21,
+            151
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 6.21,
+            "position_m": [
+              4.373546846321304,
+              -0.5122561564557375,
+              1.9401347595182077
+            ],
+            "own_goal_distance_m": 0.12840496755233313,
+            "heading_before_m_s": [
+              0.2609032735460728,
+              -0.0031992941619640326,
+              0.020658304337584758
+            ],
+            "peers": [
+              {
+                "drone": 151,
+                "distance_100ms_before_m": 0.16048560463170655,
+                "closing_speed_100ms_before_m_s": 0.800157326615918,
+                "velocity_cosine_100ms_before": 0.18211258407934772,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 1.5541557424239922,
+                "other_reached_before_event": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "drone": 97,
+        "reached": true,
+        "first_goal_time_s": 8.75,
+        "min_goal_distance_m": 0.05443565331672261,
+        "end_goal_distance_m": 0.06452144508709454,
+        "physical_first_contacts": {
+          "obstacle": [
+            5.36,
+            10
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "obstacle",
+            "time_s": 5.36,
+            "position_m": [
+              1.340614214293305,
+              3.1931005318769263,
+              2.208000247555843
+            ],
+            "own_goal_distance_m": 1.753633389590077,
+            "heading_before_m_s": [
+              0.23059992149690364,
+              -0.014930718662791526,
+              0.10635669333001649
+            ],
+            "obstacle_index": 10,
+            "obstacle_center_m": [
+              1.5,
+              3.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.3558717008253837
+          }
+        ]
+      },
+      {
+        "drone": 208,
+        "reached": true,
+        "first_goal_time_s": 10.86,
+        "min_goal_distance_m": 0.06716625947126804,
+        "end_goal_distance_m": 0.07721976206477076,
+        "physical_first_contacts": {
+          "obstacle": [
+            5.84,
+            4
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "obstacle",
+            "time_s": 5.84,
+            "position_m": [
+              3.3023945788102194,
+              0.21738838138498184,
+              1.648887695831405
+            ],
+            "own_goal_distance_m": 4.4691729070671,
+            "heading_before_m_s": [
+              -0.4953535028828261,
+              1.3711128510721937,
+              0.02698966327209332
+            ],
+            "obstacle_index": 4,
+            "obstacle_center_m": [
+              3.5,
+              0.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.4458183677136639
+          }
+        ]
+      },
+      {
+        "drone": 269,
+        "reached": true,
+        "first_goal_time_s": 12.33,
+        "min_goal_distance_m": 0.08121210471782118,
+        "end_goal_distance_m": 0.08969162979396032,
+        "physical_first_contacts": {
+          "neighbor": [
+            8.19,
+            297
+          ],
+          "obstacle": [
+            8.66,
+            19
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 8.19,
+            "position_m": [
+              -3.4866574799375636,
+              4.421205009078866,
+              2.93553957488469
+            ],
+            "own_goal_distance_m": 1.0844762597717357,
+            "heading_before_m_s": [
+              -0.09831102483000717,
+              1.4911197787589523,
+              -0.38873868515625987
+            ],
+            "peers": [
+              {
+                "drone": 297,
+                "distance_100ms_before_m": 0.2191474735827808,
+                "closing_speed_100ms_before_m_s": 1.4573084425472833,
+                "velocity_cosine_100ms_before": 0.38043101388484024,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 0.072488807755444,
+                "other_reached_before_event": true
+              }
+            ]
+          },
+          {
+            "kind": "obstacle",
+            "time_s": 8.66,
+            "position_m": [
+              -4.199380574175984,
+              4.3820092874227035,
+              2.096976732974631
+            ],
+            "own_goal_distance_m": 1.5065723011587335,
+            "heading_before_m_s": [
+              -2.223288343272644,
+              -0.14989988185958913,
+              -2.4869179087299784
+            ],
+            "obstacle_index": 19,
+            "obstacle_center_m": [
+              -4.5,
+              4.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.5539208908239363
+          }
+        ]
+      }
+    ],
+    "initial_state_matches": true,
+    "freeze_start_s": 4.46
+  },
+  {
+    "seed": 50007,
+    "group": "working_sensor",
+    "safe": [
+      184,
+      181
+    ],
+    "failure_causes": [
+      {
+        "neighbor": 38,
+        "obstacle": 9
+      },
+      {
+        "neighbor": 39,
+        "obstacle": 9
+      }
+    ],
+    "improved": [],
+    "worsened": [
+      {
+        "drone": 99,
+        "reached": true,
+        "first_goal_time_s": 7.38,
+        "min_goal_distance_m": 0.10001764282266758,
+        "end_goal_distance_m": 0.10001764282266758,
+        "physical_first_contacts": {
+          "neighbor": [
+            5.12,
+            160
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 5.12,
+            "position_m": [
+              -0.6281059619904387,
+              3.5190445516367665,
+              1.3363413727641695
+            ],
+            "own_goal_distance_m": 1.1380120424410054,
+            "heading_before_m_s": [
+              1.3456114119146172,
+              -0.6957556369912611,
+              0.053137046511068625
+            ],
+            "peers": [
+              {
+                "drone": 160,
+                "distance_100ms_before_m": 0.2206965759007821,
+                "closing_speed_100ms_before_m_s": 1.5002103141637082,
+                "velocity_cosine_100ms_before": -0.5971023006382801,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 0.10609401386227589,
+                "other_reached_before_event": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "drone": 152,
+        "reached": true,
+        "first_goal_time_s": 2.26,
+        "min_goal_distance_m": 0.0603063229021296,
+        "end_goal_distance_m": 0.06428166934657106,
+        "physical_first_contacts": {
+          "neighbor": [
+            6.79,
+            207
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 6.79,
+            "position_m": [
+              -1.444783624239983,
+              1.4797769322787222,
+              1.2071298200274352
+            ],
+            "own_goal_distance_m": 0.08491240518455284,
+            "heading_before_m_s": [
+              0.07229211660002596,
+              0.026224732712364026,
+              0.010755072976581544
+            ],
+            "peers": [
+              {
+                "drone": 207,
+                "distance_100ms_before_m": 0.29351848734965713,
+                "closing_speed_100ms_before_m_s": 2.1747327804916585,
+                "velocity_cosine_100ms_before": -0.585846323854692,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 4.574262321343927,
+                "other_reached_before_event": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "drone": 268,
+        "reached": true,
+        "first_goal_time_s": 13.1,
+        "min_goal_distance_m": 0.09697026721266518,
+        "end_goal_distance_m": 0.09697026721266518,
+        "physical_first_contacts": {
+          "obstacle": [
+            6.22,
+            20
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "obstacle",
+            "time_s": 6.22,
+            "position_m": [
+              3.8447231079658817,
+              -2.528970501546882,
+              1.8636303655530064
+            ],
+            "own_goal_distance_m": 10.19327039327704,
+            "heading_before_m_s": [
+              -0.7365301911850717,
+              0.28795588773618214,
+              0.15554269394079145
+            ],
+            "obstacle_index": 20,
+            "obstacle_center_m": [
+              3.5,
+              -2.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.40373201752625104
+          }
+        ]
+      }
+    ],
+    "initial_state_matches": true,
+    "freeze_start_s": 3.77
+  },
+  {
+    "seed": 50007,
+    "group": "selected",
+    "safe": [
+      57,
+      49
+    ],
+    "failure_causes": [
+      {
+        "obstacle": 5,
+        "neighbor": 17
+      },
+      {
+        "obstacle": 12,
+        "neighbor": 19
+      }
+    ],
+    "improved": [],
+    "worsened": [
+      {
+        "drone": 1,
+        "reached": true,
+        "first_goal_time_s": 5.57,
+        "min_goal_distance_m": 0.057007189466229236,
+        "end_goal_distance_m": 0.0633954679691896,
+        "physical_first_contacts": {
+          "neighbor": [
+            1.49,
+            34
+          ],
+          "obstacle": [
+            8.07,
+            25
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 7.04,
+            "position_m": [
+              0.5688386226388265,
+              -3.571014785817462,
+              1.9967701560047195
+            ],
+            "own_goal_distance_m": 0.11152232171946069,
+            "heading_before_m_s": [
+              -0.0349627389859206,
+              0.07186113015197641,
+              -0.00761171614526879
+            ],
+            "peers": [
+              {
+                "drone": 58,
+                "distance_100ms_before_m": 0.34022254798054935,
+                "closing_speed_100ms_before_m_s": 2.7766566748775405,
+                "velocity_cosine_100ms_before": 0.29067583765745014,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 1.684617325539255,
+                "other_reached_before_event": false
+              }
+            ]
+          },
+          {
+            "kind": "obstacle",
+            "time_s": 8.07,
+            "position_m": [
+              2.1713617670832357,
+              -2.4905707538185595,
+              0.8508381831696117
+            ],
+            "own_goal_distance_m": 2.2383280740698037,
+            "heading_before_m_s": [
+              2.30612450971134,
+              0.441156123785602,
+              -2.881156233393077
+            ],
+            "obstacle_index": 25,
+            "obstacle_center_m": [
+              2.5,
+              -2.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.5377380545114729
+          }
+        ]
+      },
+      {
+        "drone": 130,
+        "reached": true,
+        "first_goal_time_s": 8.49,
+        "min_goal_distance_m": 0.05380773176428801,
+        "end_goal_distance_m": 0.07720575231568202,
+        "physical_first_contacts": {
+          "obstacle": [
+            4.59,
+            24
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "obstacle",
+            "time_s": 4.59,
+            "position_m": [
+              -2.1713442729938035,
+              3.401356676491737,
+              3.181271101543826
+            ],
+            "own_goal_distance_m": 2.1575371012064233,
+            "heading_before_m_s": [
+              -0.2975083376645104,
+              0.9502001387423555,
+              -0.6319233784468051
+            ],
+            "obstacle_index": 24,
+            "obstacle_center_m": [
+              -2.5,
+              3.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.4068969475638034
+          }
+        ]
+      },
+      {
+        "drone": 160,
+        "reached": true,
+        "first_goal_time_s": 3.57,
+        "min_goal_distance_m": 0.06098959709575319,
+        "end_goal_distance_m": 0.06412843151805464,
+        "physical_first_contacts": {
+          "neighbor": [
+            5.12,
+            99
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "neighbor",
+            "time_s": 5.12,
+            "position_m": [
+              -0.5834706152762766,
+              3.487396479689741,
+              1.2681864797070455
+            ],
+            "own_goal_distance_m": 0.10609401386227589,
+            "heading_before_m_s": [
+              -0.02351386712466297,
+              0.08225194310121463,
+              0.04283863578892762
+            ],
+            "peers": [
+              {
+                "drone": 99,
+                "distance_100ms_before_m": 0.2206965759007821,
+                "closing_speed_100ms_before_m_s": 1.5002103141637082,
+                "velocity_cosine_100ms_before": -0.5971023006382801,
+                "visibility_100ms_before": [
+                  true,
+                  true
+                ],
+                "other_goal_distance_m": 1.1380120424410054,
+                "other_reached_before_event": false
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "drone": 233,
+        "reached": true,
+        "first_goal_time_s": 6.89,
+        "min_goal_distance_m": 0.043733718857236974,
+        "end_goal_distance_m": 0.06922881870945348,
+        "physical_first_contacts": {
+          "obstacle": [
+            4.32,
+            4
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "obstacle",
+            "time_s": 4.32,
+            "position_m": [
+              -4.1728976391840025,
+              -0.47525720967273916,
+              2.2006313607548025
+            ],
+            "own_goal_distance_m": 1.3537843114040244,
+            "heading_before_m_s": [
+              -2.2485242219738826,
+              -0.9847843453323611,
+              -0.09485738418222546
+            ],
+            "obstacle_index": 4,
+            "obstacle_center_m": [
+              -4.5,
+              -0.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.557368260327584
+          }
+        ]
+      },
+      {
+        "drone": 242,
+        "reached": true,
+        "first_goal_time_s": 7.03,
+        "min_goal_distance_m": 0.08786030332494485,
+        "end_goal_distance_m": 0.10562129201147563,
+        "physical_first_contacts": {
+          "obstacle": [
+            4.76,
+            18
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "obstacle",
+            "time_s": 4.76,
+            "position_m": [
+              3.278416526244396,
+              2.7445739092952217,
+              2.156799015672306
+            ],
+            "own_goal_distance_m": 2.237849103188782,
+            "heading_before_m_s": [
+              2.5167148008823896,
+              -0.4577856710757031,
+              0.11949793240318175
+            ],
+            "obstacle_index": 18,
+            "obstacle_center_m": [
+              3.5,
+              2.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.549233672777609
+          }
+        ]
+      },
+      {
+        "drone": 244,
+        "reached": true,
+        "first_goal_time_s": 7.98,
+        "min_goal_distance_m": 0.05857776371698224,
+        "end_goal_distance_m": 0.05857776371698224,
+        "physical_first_contacts": {
+          "obstacle": [
+            5.73,
+            0
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "obstacle",
+            "time_s": 5.73,
+            "position_m": [
+              5.771453696882827,
+              3.291229952068554,
+              1.330261734869624
+            ],
+            "own_goal_distance_m": 2.2368628252845353,
+            "heading_before_m_s": [
+              -0.22699225116254018,
+              2.1631962439042076,
+              -0.33932720356084434
+            ],
+            "obstacle_index": 0,
+            "obstacle_center_m": [
+              5.5,
+              3.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.5163902318453363
+          }
+        ]
+      },
+      {
+        "drone": 269,
+        "reached": true,
+        "first_goal_time_s": 11.18,
+        "min_goal_distance_m": 0.06464448538619467,
+        "end_goal_distance_m": 0.06464448538619467,
+        "physical_first_contacts": {
+          "obstacle": [
+            4.41,
+            3
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "obstacle",
+            "time_s": 4.41,
+            "position_m": [
+              -5.423028810980393,
+              1.1760491011061063,
+              3.1153969046370267
+            ],
+            "own_goal_distance_m": 1.3519977775447638,
+            "heading_before_m_s": [
+              -0.26515076199172155,
+              2.1674763146174554,
+              -0.20652259411934762
+            ],
+            "obstacle_index": 3,
+            "obstacle_center_m": [
+              -5.5,
+              1.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.5510832703409948
+          }
+        ]
+      },
+      {
+        "drone": 272,
+        "reached": true,
+        "first_goal_time_s": 11.4,
+        "min_goal_distance_m": 0.09101030508949992,
+        "end_goal_distance_m": 0.10679052584749045,
+        "physical_first_contacts": {
+          "obstacle": [
+            4.01,
+            20
+          ]
+        },
+        "scored_events": [
+          {
+            "kind": "obstacle",
+            "time_s": 4.01,
+            "position_m": [
+              3.7922664176155374,
+              -2.315037721699473,
+              2.2487484686031816
+            ],
+            "own_goal_distance_m": 2.552031834022847,
+            "heading_before_m_s": [
+              -0.03881364833695415,
+              -0.1251809627420825,
+              0.09967899848075745
+            ],
+            "obstacle_index": 20,
+            "obstacle_center_m": [
+              3.5,
+              -2.5,
+              5.0
+            ],
+            "xy_center_distance_100ms_before_m": 0.352041923821657
+          }
+        ]
+      }
+    ],
+    "initial_state_matches": true,
+    "freeze_start_s": 3.77
+  }
+]

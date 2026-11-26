@@ -1,58 +1,58 @@
 # QuadSwarm RL
 
-This fork of QuadSwarm studies how quadrotor swarms share narrow passages and how a learned flight policy transfers to larger swarms. The experiments run in simulation.
+Этот форк QuadSwarm предназначен для экспериментов с приоритизацией дронов в узких проходах и проверкой переноса обученной полётной политики на рои разного размера. Все эксперименты проведены в симуляторе.
 
-## Priority coordination
+## Приоритизация
 
 <p align="center">
-  <img src="swarm_rl/gifs/drone-static-priority-flow-hd.gif" alt="Static priority" width="250">
-  <img src="swarm_rl/gifs/drone-priority-channel-flow-hd.gif" alt="Priority channel during training and inference" width="250">
+  <img src="swarm_rl/gifs/drone-static-priority-flow-hd.gif" alt="Статическая приоритизация" width="250">
+  <img src="swarm_rl/gifs/drone-priority-channel-flow-hd.gif" alt="Канал приоритета при обучении и на инференсе" width="250">
 </p>
 
 <p align="center">
-  <img src="swarm_rl/gifs/drone-central-coordinator-flow-hd.gif" alt="Central coordinator" width="320">
+  <img src="swarm_rl/gifs/drone-central-coordinator-flow-hd.gif" alt="Центральный координатор" width="320">
 </p>
 
-- **Static priority.** Drone IDs determine which drone yields when paths conflict.
-- **Priority channel.** Drones exchange priority scores with nearby neighbors during training. At inference, each drone decides whether to yield from its local observations with the channel disabled.
-- **Central coordinator.** The coordinator forecasts conflicts and compares three options for a pair of drones. Both can continue, or either drone can yield. The flight policy turns a temporary hold target into motor commands.
+- **Статическая приоритизация.** При конфликте траекторий порядок уступания определяется номерами дронов.
+- **Канал приоритета.** Во время обучения дроны обмениваются рангами с ближайшими соседями. На инференсе канал отключён, и каждый дрон сам решает, уступать ли, по локальным наблюдениям.
+- **Центральный координатор.** При конфликте координатор сравнивает три варианта. Оба дрона продолжают полёт, уступает первый или уступает второй. Замороженная полётная сеть пересчитывает команды моторам для удержания позиции уступающего дрона.
 
-## Simulation results
+## Результаты симуляции
 
-### Corridor navigation
+### Приоритизация в коридорах
 
-Collision-free arrivals as a percentage of individual drones, measured across eight corridors and three seeds per corridor. All four modes used the same frozen flight policy. [Protocol and episode data](https://github.com/Vikvins/quad-swarm-rl/blob/swarm100/experiments/coordination-followup/scaling-100-300/README.md)
+В таблице указана доля дронов, долетевших без столкновений. Для каждого размера роя использовали восемь коридоров по три сида. Во всех режимах работала одна замороженная полётная модель. [Протокол и исходные эпизоды](https://github.com/Vikvins/quad-swarm-rl/blob/swarm100/experiments/coordination-followup/scaling-100-300/README.md)
 
-| Method | 100 drones | 200 drones | 300 drones |
+| Режим | 100 дронов | 200 дронов | 300 дронов |
 |---|---:|---:|---:|
-| No priority | 16.2% | 6.5% | 4.0% |
-| Static priority | 23.5% | 12.1% | 8.3% |
-| Priority channel | 31.2% | 14.2% | 8.9% |
-| Central coordinator | **37.6%** | **20.5%** | **13.4%** |
+| Без приоритизации | 16,2% | 6,5% | 4,0% |
+| Статическая приоритизация | 23,5% | 12,1% | 8,3% |
+| Канал приоритета | 31,2% | 14,2% | 8,9% |
+| Центральный координатор | **37,6%** | **20,5%** | **13,4%** |
 
-### Scaling with random obstacles
+### Масштабируемость на случайных препятствиях
 
-We evaluated one checkpoint trained on 100 drones across 16 random obstacle scenes with three repetitions per scene and normal sensor readings. For larger swarms, we added vertical slots for starts and goals within the same room. The standard deviation is calculated across scene averages. [Simulation protocol for 8 to 300 drones](https://github.com/Vikvins/quad-swarm-rl/blob/swarm100/experiments/scaling-725m/random-obstacles/README.md)
+Один чекпоинт обучили на 100 дронах и проверили на 16 сценах со случайными препятствиями. На каждую сцену и размер роя было по три повтора со штатными датчиками. Для больших роёв добавили высотные позиции для стартов и целей в той же комнате. Стандартное отклонение рассчитано между средними по сценам. [Протокол для 8–300 дронов](https://github.com/Vikvins/quad-swarm-rl/blob/swarm100/experiments/scaling-725m/random-obstacles/README.md)
 
-| Drones | Mean collision-free arrivals | Standard deviation (pp) |
+| Дронов | Долетели без столкновений | Стандартное отклонение, п.п. |
 |---:|---:|---:|
-| 8 | 97.92% | 4.56 |
-| 100 | 91.40% | 3.14 |
-| 200 | 84.50% | 2.74 |
-| 300 | 79.31% | 3.39 |
-| 500 | 76.14% | 2.10 |
-| 1,000 | 60.37% | 1.87 |
+| 8 | 97,92% | 4,56 |
+| 100 | 91,40% | 3,14 |
+| 200 | 84,50% | 2,74 |
+| 300 | 79,31% | 3,39 |
+| 500 | 76,14% | 2,10 |
+| 1 000 | 60,37% | 1,87 |
 
-All drones arrived without collisions in 41 of 48 episodes at 8 drones and 0 of 48 episodes at each larger size.
+Весь рой долетел без столкновений в 41 из 48 эпизодов на 8 дронах и в 0 из 48 эпизодов на каждом большем размере.
 
-## Repository layout
+## Структура репозитория
 
-- Simulator and scenarios — [`gym_art/quadrotor_multi/`](gym_art/quadrotor_multi/)
-- Flight policy models and training configurations — [`swarm_rl/models/`](swarm_rl/models/) and [`swarm_rl/runs/`](swarm_rl/runs/)
-- Layout evaluation — [`swarm_rl/run_layout_suite.py`](swarm_rl/run_layout_suite.py)
-- Checkpoints, experiment commands, and results — [`swarm100` experiments](https://github.com/Vikvins/quad-swarm-rl/tree/swarm100/experiments)
+- Симулятор и сценарии — [`gym_art/quadrotor_multi/`](gym_art/quadrotor_multi/)
+- Модели и конфигурации обучения — [`swarm_rl/models/`](swarm_rl/models/) и [`swarm_rl/runs/`](swarm_rl/runs/)
+- Оценка на заданных сценах — [`swarm_rl/run_layout_suite.py`](swarm_rl/run_layout_suite.py)
+- Веса, команды запуска и результаты — [эксперименты ветки `swarm100`](https://github.com/Vikvins/quad-swarm-rl/tree/swarm100/experiments)
 
-## Installation and use
+## Установка и запуск
 
 ```bash
 git clone https://github.com/Vikvins/quad-swarm-rl.git
@@ -62,7 +62,7 @@ conda activate quad-swarm
 python -m pip install -e .
 ```
 
-Start the single-drone training example with `bash train.sh`. To visualize a saved Sample Factory run:
+Команда `bash train.sh` запускает пример обучения одного дрона. Для визуализации сохранённого прогона Sample Factory укажите каталог обучения и имя эксперимента в следующей команде.
 
 ```bash
 python -m swarm_rl.enjoy \
@@ -71,8 +71,8 @@ python -m swarm_rl.enjoy \
   --quads_render=True --quads_view_mode=global
 ```
 
-For the swarm training and evaluation commands, see the [experiment index](https://github.com/Vikvins/quad-swarm-rl/tree/swarm100/experiments). Run unit tests with `python -m unittest`.
+Команды обучения и тестирования роя приведены в [списке экспериментов](https://github.com/Vikvins/quad-swarm-rl/tree/swarm100/experiments). Для запуска модульных тестов используйте `python -m unittest`.
 
-## Credits
+## Исходная работа
 
-This project builds on the original QuadSwarm simulator and its end-to-end flight policy. [Upstream repository and bibliography](https://github.com/Zhehui-Huang/quad-swarm-rl), [QuadSwarm simulator paper](https://arxiv.org/abs/2306.09537), [ICRA 2024 navigation paper](https://ieeexplore.ieee.org/document/10611499)
+Проект использует исходный симулятор QuadSwarm и его полётную политику. [Оригинальный репозиторий и список публикаций](https://github.com/Zhehui-Huang/quad-swarm-rl), [статья о симуляторе](https://arxiv.org/abs/2306.09537), [статья по навигации ICRA 2024](https://ieeexplore.ieee.org/document/10611499)

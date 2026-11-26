@@ -1,0 +1,46 @@
+{
+  "agents": [
+    100
+  ],
+  "seeds": [
+    50000,
+    50001,
+    50002
+  ],
+  "duration": 15.0,
+  "layouts": [
+    "comb_open",
+    "elbow_open",
+    "fork_open",
+    "funnel_open",
+    "narrow_open",
+    "straight_open",
+    "wide_u_open",
+    "zigzag_open"
+  ],
+  "modes": [
+    "baseline",
+    "static_brake",
+    "local_off",
+    "local_on",
+    "three_way_off",
+    "three_way_selective",
+    "central"
+  ],
+  "coordinator_pair_limit": 64,
+  "files": {
+    "baseline.json": "8c21f01ad541112fb109daf0bf13a471656cf2118b1f6a74f32068c439600d0a",
+    "baseline.pth": "f429fa60b70a82ba1aaf54ebbdd0f966d65995d46caf87e0fd8628e1f15b2524",
+    "coordinator_100m.pt": "6a4b19066396b6feefdb53934176d1a792c01a41a33311c0ab42807ce0184741",
+    "checkpoint_additional_001000000.pt": "fd53f4c25308e025ea45259ebf389f5ce722653b4fcbb4ee0fe36232ccc7a69c",
+    "reference.csv": "c034cab128bf44be9cfdbe0bad5d45ca23d02682ea470151fc62a63b14b37e6b",
+    "reference.json": "c50439f20ce509f7d27ff81c53a322217bb1cffe1611d91c258f5e3ce952f81a",
+    "evaluate_matrix.py": "2d08101a22eaa406f8239049439f9b69b981d846a8af8e5dfb87fa00d4baf39e",
+    "suite_layouts.py": "43af9dac4e3dbcaa596da3fba2648a21cd0fefe29312a009b9a38670e1296206",
+    "evaluate_priority.py": "0f68b2213b62af7fbe802cfd2cfc4e7be4a06398028de8c29e0ba5023fe5ae86",
+    "evaluate_conflict_lookahead.py": "3c2b28b308035c6d575bb19f02de64d27520b185cf53ecbb4c4284b54b2e957f",
+    "evaluate_rank_order.py": "142a41f1fcc3a5661c38995c02bcd7e409f81e48e4f599d5798011df95219192",
+    "priority_brake.py": "022b1b5cde9279b93bdae4d914280a97449a3b680e1392becf6cd3d70d6a9faa",
+    "reciprocal_peer.py": "e8be8207279cc67285bcb2e15e541263c5e744fea500ef3b7200e001edf190bb"
+  }
+}

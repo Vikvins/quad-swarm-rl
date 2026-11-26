@@ -4,9 +4,14 @@ This fork of QuadSwarm studies how quadrotor swarms share narrow passages and ho
 
 ## Priority coordination
 
-| Static priority | Priority channel | Central coordinator |
-| :---: | :---: | :---: |
-| <img src="swarm_rl/gifs/drone-static-priority-flow-hd.gif" alt="Static priority" width="300"> | <img src="swarm_rl/gifs/drone-priority-channel-flow-hd.gif" alt="Priority channel during training and inference" width="300"> | <img src="swarm_rl/gifs/drone-central-coordinator-flow-hd.gif" alt="Central coordinator" width="300"> |
+<p align="center">
+  <img src="swarm_rl/gifs/drone-static-priority-flow-hd.gif" alt="Static priority" width="250">
+  <img src="swarm_rl/gifs/drone-priority-channel-flow-hd.gif" alt="Priority channel during training and inference" width="250">
+</p>
+
+<p align="center">
+  <img src="swarm_rl/gifs/drone-central-coordinator-flow-hd.gif" alt="Central coordinator" width="320">
+</p>
 
 - **Static priority.** Drone IDs determine which drone yields when paths conflict.
 - **Priority channel.** Drones exchange priority scores with nearby neighbors during training. At inference, each drone decides whether to yield from its local observations with the channel disabled.
